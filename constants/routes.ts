@@ -1,0 +1,33 @@
+export const routes = {
+  public: {
+    home: "/",
+    about: "/about",
+    services: "/services",
+    careers: "/careers",
+    submitResume: "/submit-resume",
+    employers: "/employers",
+    contact: "/contact",
+    privacyPolicy: "/privacy-policy",
+    terms: "/terms",
+  },
+  admin: {
+    login: "/admin/login",
+    dashboard: "/admin/dashboard",
+    jobs: "/admin/jobs",
+    applications: "/admin/applications",
+    candidates: "/admin/candidates",
+    resumes: "/admin/resumes",
+    ats: "/admin/ats",
+    reports: "/admin/reports",
+  },
+  superAdmin: {
+    login: "/super-admin/login",
+    dashboard: "/super-admin/dashboard",
+    users: "/super-admin/users",
+    roles: "/super-admin/roles",
+    settings: "/super-admin/settings",
+    websiteContent: "/super-admin/website-content",
+    atsSettings: "/super-admin/ats-settings",
+    auditLogs: "/super-admin/audit-logs",
+  },
+} as const;
