@@ -7,6 +7,8 @@ import clientRoutes from "./routes/client.routes";
 import userRoutes from "./routes/user.routes";
 import jobRoutes from "./routes/job.routes";
 import candidateRoutes from "./routes/candidate.routes";
+import applicationRoutes from "./routes/application.routes";
+import applicationNoteRoutes from "./routes/applicationNote.routes";
 const app: Application = express();
 
 
@@ -55,5 +57,11 @@ app.use("/api/jobs", jobRoutes);
 
 // candidate routes
 app.use("/api/candidates", candidateRoutes);
+
+// application routes
+app.use("/api/applications", applicationRoutes);
+
+//applicaton notes
+app.use("/api/application-notes", applicationNoteRoutes);
 
 export default app;
