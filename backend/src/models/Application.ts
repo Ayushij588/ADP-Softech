@@ -1,19 +1,10 @@
-
 import mongoose, { Schema, Document } from "mongoose";
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+} from "../constants/applicationStatus";
 
-export type ApplicationStatus =
-  | "new_application"
-  | "resume_under_review"
-  | "shortlisted"
-  | "technical_screening"
-  | "interview_scheduled"
-  | "selected"
-  | "rejected"
-  | "on_hold"
-  | "submitted_to_client"
-  | "client_approved"
-  | "client_rejected"
-  | "hired";
+export type { ApplicationStatus } from "../constants/applicationStatus";
 
 export interface IApplication extends Document {
   applicationId: string;
@@ -45,21 +36,9 @@ const applicationSchema = new Schema<IApplication>(
 
     status: {
       type: String,
-      enum: [
-        "new_application",
-        "resume_under_review",
-        "shortlisted",
-        "technical_screening",
-        "interview_scheduled",
-        "selected",
-        "rejected",
-        "on_hold",
-        "submitted_to_client",
-        "client_approved",
-        "client_rejected",
-        "hired",
-      ],
+      enum: APPLICATION_STATUSES,
       default: "new_application",
+      required: true,
     },
 
     appliedAt: {
@@ -70,12 +49,10 @@ const applicationSchema = new Schema<IApplication>(
   { timestamps: true }
 );
 
+// Prevent duplicate applications for the same candidate and job
 applicationSchema.index(
   { candidate: 1, job: 1 },
   { unique: true }
 );
 
-export default mongoose.model<IApplication>(
-  "Application",
-  applicationSchema
-);
+export default mongoose.model<IApplication>("Application", applicationSchema);

@@ -1,23 +1,46 @@
-
 import { Router } from "express";
+import { authMiddleware } from "../middleware/auth.middleware";
+import { authorizeRoles } from "../middleware/role.middleware";
+import { validateRequest } from "../middleware/validate.middleware";
+import { applicationQuerySchema } from "../validators/application.validator";
+
 import {
   createApplicationController,
-    getAllApplicationsController,
-    getApplicationByIdController,
+  getAllApplicationsController,
+  getApplicationByIdController,
+  requestApplicationVerificationController,
   updateApplicationStatusController,
 } from "../controllers/application.controller";
+
 const router = Router();
 
-// Submit a new application (Public route)
+// Public route - Candidate can submit application
+router.post("/verification", requestApplicationVerificationController);
 router.post("/", createApplicationController);
 
-// Get all applications
-router.get("/", getAllApplicationsController);
+// Protected route - Admin and Recruiter
+router.get(
+  "/",
+  authMiddleware,
+  authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ query: applicationQuerySchema }),
+  getAllApplicationsController
+);
 
-// Get application by ID
-router.get("/:id", getApplicationByIdController);
+// Protected route - Admin and Recruiter
+router.get(
+  "/:id",
+  authMiddleware,
+  authorizeRoles("super_admin", "recruiter"),
+  getApplicationByIdController
+);
 
-// update routes
+// Protected route - Admin and Recruiter
+router.patch(
+  "/:id/status",
+  authMiddleware,
+  authorizeRoles("super_admin", "recruiter"),
+  updateApplicationStatusController
+);
 
-router.patch("/:id/status", updateApplicationStatusController);
 export default router;

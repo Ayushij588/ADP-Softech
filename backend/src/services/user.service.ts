@@ -1,4 +1,4 @@
-
+import bcrypt from "bcrypt";
 import User from "../models/User";
 import {
   UpdateRecruiterInput,
@@ -17,6 +17,10 @@ export const getAllRecruiters = async () => {
 
 // Get recruiter by ID
 export const getRecruiterById = async (recruiterId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(recruiterId)) {
+    throw new Error("Invalid recruiter ID");
+  }
+
   const recruiter = await User.findOne({
     _id: recruiterId,
     role: "recruiter",
@@ -38,6 +42,21 @@ export const updateRecruiter = async (
     throw new Error("Invalid recruiter ID");
   }
 
+  const name = data.name?.trim();
+  const email = data.email?.trim().toLowerCase();
+
+  if (data.name !== undefined && !name) {
+    throw new Error("Name is required");
+  }
+
+  if (data.email !== undefined && !email) {
+    throw new Error("Email is required");
+  }
+
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new Error("Invalid email address");
+  }
+
   const recruiter = await User.findOne({
     _id: recruiterId,
     role: "recruiter",
@@ -47,9 +66,9 @@ export const updateRecruiter = async (
     throw new Error("Recruiter not found");
   }
 
-  if (data.email) {
+  if (email && email !== recruiter.email) {
     const existingUser = await User.findOne({
-      email: data.email,
+      email,
       _id: { $ne: recruiterId },
     });
 
@@ -58,15 +77,28 @@ export const updateRecruiter = async (
     }
   }
 
-  if (data.name !== undefined) {
-    recruiter.name = data.name;
+  if (name !== undefined) {
+    recruiter.name = name;
   }
 
-  if (data.email !== undefined) {
-    recruiter.email = data.email;
+  if (email !== undefined) {
+    recruiter.email = email;
   }
 
-  await recruiter.save();
+  try {
+    await recruiter.save();
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      throw new Error("Email is already registered");
+    }
+
+    throw error;
+  }
 
   return {
     id: recruiter._id,
@@ -108,5 +140,39 @@ export const updateRecruiterStatus = async (
     role: recruiter.role,
     status: recruiter.status,
     updatedAt: recruiter.updatedAt,
+  };
+};
+// Reset recruiter password
+export const resetRecruiterPassword = async (
+  recruiterId: string,
+  password: string
+) => {
+  if (!mongoose.Types.ObjectId.isValid(recruiterId)) {
+    throw new Error("Invalid recruiter ID");
+  }
+
+  const recruiter = await User.findOne({
+    _id: recruiterId,
+    role: "recruiter",
+  });
+
+  if (!recruiter) {
+    throw new Error("Recruiter not found");
+  }
+
+  // Hash the new password
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  // Save hashed password
+  recruiter.password = hashedPassword;
+  await recruiter.save();
+
+  return {
+    id: recruiter._id,
+    name: recruiter.name,
+    email: recruiter.email,
+    role: recruiter.role,
+    status: recruiter.status,
+    message: "Recruiter password reset successfully",
   };
 };

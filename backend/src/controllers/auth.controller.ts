@@ -1,6 +1,5 @@
 
 import { Request, Response } from "express";
-import { loginSchema, createRecruiterSchema } from "../validators/auth.validator";
 import { loginUser, createRecruiter } from "../services/auth.service";
 
 // Login controller
@@ -9,29 +8,23 @@ export const loginController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = loginSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
-    const result = await loginUser(validation.data);
+    const result = await loginUser(req.body);
 
     res.status(200).json({
       success: true,
       message: "Login successful",
       data: result,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
+  } catch (error: unknown) {
+    const isAuthenticationError =
+      error instanceof Error &&
+      (error.message === "Invalid email or password" ||
+        error.message === "Your account is inactive or suspended");
+    const message = isAuthenticationError
+      ? error.message
+      : "Something went wrong";
 
-    res.status(401).json({
+    res.status(isAuthenticationError ? 401 : 500).json({
       success: false,
       message,
     });
@@ -44,30 +37,25 @@ export const createRecruiterController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = createRecruiterSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
-    const recruiter = await createRecruiter(validation.data);
+    const recruiter = await createRecruiter(req.body);
 
     res.status(201).json({
       success: true,
       message: "Recruiter created successfully",
       data: recruiter,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
-
-    const statusCode =
-      message === "Email is already registered" ? 409 : 500;
+  } catch (error: unknown) {
+    const isDuplicateEmail =
+      (error instanceof Error &&
+        error.message === "Email is already registered") ||
+      (typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === 11000);
+    const statusCode = isDuplicateEmail ? 409 : 500;
+    const message = isDuplicateEmail
+      ? "Email is already registered"
+      : "Failed to create recruiter";
 
     res.status(statusCode).json({
       success: false,

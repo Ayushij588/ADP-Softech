@@ -5,6 +5,8 @@ export interface ICandidate extends Document {
   fullName: string;
   email: string;
   mobileNumber: string;
+  consent: boolean;
+  consentAt: Date;
   currentLocation?: string;
   totalExperience?: number;
   relevantExperience?: number;
@@ -25,12 +27,28 @@ const candidateSchema = new Schema<ICandidate>(
       required: true,
       trim: true,
       lowercase: true,
+      unique: true,
     },
 
     mobileNumber: {
       type: String,
       required: true,
       trim: true,
+      unique: true,
+    },
+
+    consent: {
+      type: Boolean,
+      required: true,
+      validate: {
+        validator: (value: boolean) => value === true,
+        message: "Consent is required",
+      },
+    },
+
+    consentAt: {
+      type: Date,
+      required: true,
     },
 
     currentLocation: {
