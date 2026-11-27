@@ -1,19 +1,63 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #17212f;
+  /* Mandatory Brand Theme - Exact Primary Color */
+  --brand-primary: oklch(39.8% 0.07 227.392);
+  --brand-dark: #07394B;
+  --brand-navy: #102D42;
+  --brand-medium: #17647B;
+  --brand-cyan: #14B8C4;
+  --brand-light: #DCEFF5;
+  --brand-background: #F1F8FB;
+  --brand-white: #FFFFFF;
+  --brand-text: #152B38;
+  --brand-border: #DCE8ED;
+
+  --background: var(--brand-background);
+  --foreground: var(--brand-text);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --color-brand-primary: oklch(39.8% 0.07 227.392);
+  --color-brand-dark: #07394B;
+  --color-brand-navy: #102D42;
+  --color-brand-medium: #17647B;
+  --color-brand-cyan: #14B8C4;
+  --color-brand-light: #DCEFF5;
+  --color-brand-background: #F1F8FB;
+  --color-brand-white: #FFFFFF;
+  --color-brand-text: #152B38;
+  --color-brand-border: #DCE8ED;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Static 3D Card Depth, Layered Elevation, and Fine Borders */
+.card-depth-1 {
+  background-color: #FFFFFF;
+  border: 1px solid #DCE8ED;
+  box-shadow: 0 1px 3px rgba(7, 57, 75, 0.05), 0 4px 12px rgba(7, 57, 75, 0.04);
+}
+
+.card-depth-2 {
+  background-color: #FFFFFF;
+  border: 1px solid #DCE8ED;
+  box-shadow: 0 2px 6px rgba(7, 57, 75, 0.06), 0 8px 24px rgba(7, 57, 75, 0.08);
+}
+
+.card-depth-hero {
+  border: 1px solid rgba(220, 232, 237, 0.8);
+  box-shadow: 0 8px 30px rgba(7, 57, 75, 0.12), 0 2px 8px rgba(7, 57, 75, 0.06);
+}
+
+.static-layer {
+  position: relative;
+  border-radius: 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #DCE8ED;
 }

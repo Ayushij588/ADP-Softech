@@ -4,42 +4,32 @@ import { CareerOpenRoles } from "@/components/public/career-open-roles";
 
 export default function CareersPage() {
   return (
-    <main>
-      <section className="bg-slate-950 text-white">
-        <div className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
-            Your next chapter
+    <main className="bg-[#F1F8FB] min-h-screen">
+      {/* Banner */}
+      <section className="bg-gradient-to-r from-[#07394B] to-[#102D42] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#14B8C4]">
+            ADP Softech Careers
           </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Find work that moves you forward.
+          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
+            Find Work That Moves You Forward
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-            Explore a selection of opportunities and take the next step in your
-            career with ADP Softech.
+          <p className="mt-4 max-w-2xl text-sm sm:text-base text-[#DCEFF5] leading-relaxed">
+            Browse published opportunities across software engineering, cloud, data, and BPO operations. Apply directly without creating an account or managing passwords.
           </p>
-          <Link
-            className="mt-8 inline-flex rounded-lg bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-blue-50"
-            href="/submit-resume"
-          >
-            Share your resume
-          </Link>
+          <div className="mt-8 flex flex-wrap gap-4">
+            <Link
+              className="rounded-full bg-white px-6 py-2.5 text-xs sm:text-sm font-semibold text-[#07394B] shadow-sm transition hover:bg-[#DCEFF5]"
+              href="/submit-resume"
+            >
+              Submit Resume Directly
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6 py-16 sm:py-20">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">
-              Current opportunities
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-              Roles to explore
-            </h2>
-          </div>
-          <p className="text-sm text-slate-500">
-            {openPositions.length} sample opportunities
-          </p>
-        </div>
+      {/* Main Content Area */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-18">
         <CareerOpenRoles jobs={openPositions} />
       </section>
     </main>
