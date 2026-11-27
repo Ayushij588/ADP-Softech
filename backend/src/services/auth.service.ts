@@ -1,16 +1,25 @@
 
 import bcrypt from "bcrypt";
-import User from "../models/User";
+import User, { type IUser } from "../models/User";
 import {
-  LoginInput,
-  CreateRecruiterInput,
+  loginSchema,
+  createRecruiterSchema,
+  type LoginInput,
+  type CreateRecruiterInput,
 } from "../validators/auth.validator";
 import { generateToken } from "../utils/token";
 
 // Login service
 export const loginUser = async (data: LoginInput) => {
+  const validation = loginSchema.safeParse(data);
+  if (!validation.success) {
+    throw new Error("Invalid email or password");
+  }
+
+  const { email, password } = validation.data;
+
   // 1. Find user by email
-  const user = await User.findOne({ email: data.email }).select("+password");
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     throw new Error("Invalid email or password");
@@ -22,10 +31,7 @@ export const loginUser = async (data: LoginInput) => {
   }
 
   // 3. Verify password
-  const isPasswordValid = await bcrypt.compare(
-    data.password,
-    user.password
-  );
+  const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
     throw new Error("Invalid email or password");
@@ -54,25 +60,48 @@ export const loginUser = async (data: LoginInput) => {
 
 // Create Recruiter service
 export const createRecruiter = async (data: CreateRecruiterInput) => {
+  const validation = createRecruiterSchema.safeParse(data);
+  if (!validation.success) {
+    throw new Error(
+      validation.error.issues[0]?.message ?? "Invalid recruiter data"
+    );
+  }
+
+  const { name, email, password } = validation.data;
+
   // 1. Check if email already exists
-  const existingUser = await User.findOne({ email: data.email });
+  const existingUser = await User.findOne({ email });
 
   if (existingUser) {
     throw new Error("Email is already registered");
   }
 
   // 2. Hash password
-  const hashedPassword = await bcrypt.hash(data.password, 12);
+  const hashedPassword = await bcrypt.hash(password, 12);
 
   // 3. Create recruiter
-  const recruiter = await User.create({
-    name: data.name,
-    email: data.email,
-    password: hashedPassword,
-    role: "recruiter",
-    status: "active",
-    isEmailVerified: true,
-  });
+  let recruiter: IUser;
+  try {
+    recruiter = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: "recruiter",
+      status: "active",
+      isEmailVerified: true,
+    });
+  } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      throw new Error("Email is already registered");
+    }
+
+    throw error;
+  }
 
   // 4. Return recruiter data
   return {

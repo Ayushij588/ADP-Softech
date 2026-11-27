@@ -1,7 +1,10 @@
 
-import { Response, NextFunction } from "express";
-import { AuthRequest } from "./auth.middleware";
-import { UserRole } from "../models/User";
+import type { Response, NextFunction } from "express";
+import type { AuthRequest } from "./auth.middleware";
+import type { UserRole } from "../models/User";
+
+const isUserRole = (role: unknown): role is UserRole =>
+  role === "super_admin" || role === "recruiter";
 
 // Role-based authorization middleware
 export const authorizeRoles = (...allowedRoles: UserRole[]) => {
@@ -11,7 +14,11 @@ export const authorizeRoles = (...allowedRoles: UserRole[]) => {
     next: NextFunction
   ): void => {
     // Check if user is authenticated
-    if (!req.user) {
+    if (
+      !req.user ||
+      typeof req.user.userId !== "string" ||
+      !req.user.userId.trim()
+    ) {
       res.status(401).json({
         success: false,
         message: "Unauthorized access",
@@ -20,7 +27,12 @@ export const authorizeRoles = (...allowedRoles: UserRole[]) => {
     }
 
     // Check user role
-    if (!allowedRoles.includes(req.user.role)) {
+    if (
+      !isUserRole(req.user.role) ||
+      allowedRoles.length === 0 ||
+      !allowedRoles.every(isUserRole) ||
+      !allowedRoles.includes(req.user.role)
+    ) {
       res.status(403).json({
         success: false,
         message: "You do not have permission to access this resource",

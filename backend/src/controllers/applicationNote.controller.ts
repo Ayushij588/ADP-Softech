@@ -1,24 +1,48 @@
+import mongoose from "mongoose";
 import type { Request, Response } from "express";
 import {
   createApplicationNote,
   getApplicationNotes,
 } from "../services/applicationNote.service";
+import type { AuthRequest } from "../middleware/auth.middleware";
 
 export const createApplicationNoteController = async (
-  req: Request<
-    unknown,
-    unknown,
-    { applicationId?: string; recruiterId?: string; note?: string }
-  >,
+  req: AuthRequest &
+    Request<unknown, unknown, { applicationId?: string; note?: string }>,
   res: Response
 ): Promise<void> => {
   try {
-    const { applicationId, recruiterId, note } = req.body;
+    const { applicationId, note } = req.body;
+    const recruiterId = req.user?.userId;
 
-    if (!applicationId || !recruiterId || !note) {
+    if (!recruiterId) {
+      res.status(401).json({
+        success: false,
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    if (!applicationId || typeof note !== "string") {
       res.status(400).json({
         success: false,
-        message: "Application ID, recruiter ID, and note are required",
+        message: "Application ID and note are required",
+      });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid application ID",
+      });
+      return;
+    }
+
+    if (!note.trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Note content is required",
       });
       return;
     }
@@ -35,9 +59,20 @@ export const createApplicationNoteController = async (
       applicationNote,
     });
   } catch (error: unknown) {
-    res.status(400).json({
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to add application note";
+    const statusCode =
+      message === "Invalid application ID"
+        ? 400
+        : message === "Application not found"
+          ? 404
+          : 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to add application note",
+      message,
     });
   }
 };
@@ -57,6 +92,14 @@ export const getApplicationNotesController = async (
       return;
     }
 
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid application ID",
+      });
+      return;
+    }
+
     const notes = await getApplicationNotes(applicationId);
 
     res.status(200).json({
@@ -66,9 +109,20 @@ export const getApplicationNotesController = async (
       notes,
     });
   } catch (error: unknown) {
-    res.status(400).json({
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch application notes";
+    const statusCode =
+      message === "Invalid application ID"
+        ? 400
+        : message === "Application not found"
+          ? 404
+          : 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to fetch application notes",
+      message,
     });
   }
 };

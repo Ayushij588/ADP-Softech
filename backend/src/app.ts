@@ -9,6 +9,8 @@ import jobRoutes from "./routes/job.routes";
 import candidateRoutes from "./routes/candidate.routes";
 import applicationRoutes from "./routes/application.routes";
 import applicationNoteRoutes from "./routes/applicationNote.routes";
+import applicationStatusHistoryRoutes from "./routes/applicationStatusHistory.routes";
+import errorMiddleware from "./middleware/error.middleware";
 const app: Application = express();
 
 
@@ -63,5 +65,10 @@ app.use("/api/applications", applicationRoutes);
 
 //applicaton notes
 app.use("/api/application-notes", applicationNoteRoutes);
+
+// application History
+app.use("/api/application-status-history", applicationStatusHistoryRoutes);
+
+app.use(errorMiddleware);
 
 export default app;

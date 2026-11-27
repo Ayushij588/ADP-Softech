@@ -25,12 +25,14 @@ const candidateSchema = new Schema<ICandidate>(
       required: true,
       trim: true,
       lowercase: true,
+      unique: true,
     },
 
     mobileNumber: {
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
 
     currentLocation: {

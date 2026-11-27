@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import ApplicationNote from "../models/ApplicationNote";
 import Application from "../models/Application";
 
@@ -6,6 +7,14 @@ export const createApplicationNote = async (
   recruiterId: string,
   note: string
 ) => {
+  if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+    throw new Error("Invalid application ID");
+  }
+
+  if (typeof note !== "string" || !note.trim()) {
+    throw new Error("Note content is required");
+  }
+
   const application = await Application.findById(applicationId);
 
   if (!application) {
@@ -24,6 +33,10 @@ export const createApplicationNote = async (
 export const getApplicationNotes = async (
   applicationId: string
 ) => {
+  if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+    throw new Error("Invalid application ID");
+  }
+
   const application = await Application.findById(applicationId);
 
   if (!application) {

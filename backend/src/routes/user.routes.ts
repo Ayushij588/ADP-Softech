@@ -4,6 +4,7 @@ import {
   getRecruiterByIdController,
   updateRecruiterController,
   updateRecruiterStatusController,
+  resetRecruiterPasswordController,
 } from "../controllers/user.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authorizeRoles } from "../middleware/role.middleware";
@@ -40,6 +41,13 @@ router.patch(
   authMiddleware,
   authorizeRoles("super_admin"),
   updateRecruiterStatusController
+);
+// Reset recruiter password
+router.patch(
+  "/recruiters/:id/reset-password",
+  authMiddleware,
+  authorizeRoles("super_admin"),
+  resetRecruiterPasswordController
 );
 
 export default router;

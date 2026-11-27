@@ -46,6 +46,7 @@ const clientSchema = new Schema<IClient>(
       required: true,
       lowercase: true,
       trim: true,
+      unique: true,
     },
 
     contactPhone: {

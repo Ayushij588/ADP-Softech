@@ -27,11 +27,16 @@ export const loginController = async (
       message: "Login successful",
       data: result,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
+  } catch (error: unknown) {
+    const isAuthenticationError =
+      error instanceof Error &&
+      (error.message === "Invalid email or password" ||
+        error.message === "Your account is inactive or suspended");
+    const message = isAuthenticationError
+      ? error.message
+      : "Something went wrong";
 
-    res.status(401).json({
+    res.status(isAuthenticationError ? 401 : 500).json({
       success: false,
       message,
     });
@@ -62,12 +67,18 @@ export const createRecruiterController = async (
       message: "Recruiter created successfully",
       data: recruiter,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Something went wrong";
-
-    const statusCode =
-      message === "Email is already registered" ? 409 : 500;
+  } catch (error: unknown) {
+    const isDuplicateEmail =
+      (error instanceof Error &&
+        error.message === "Email is already registered") ||
+      (typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === 11000);
+    const statusCode = isDuplicateEmail ? 409 : 500;
+    const message = isDuplicateEmail
+      ? "Email is already registered"
+      : "Failed to create recruiter";
 
     res.status(statusCode).json({
       success: false,
