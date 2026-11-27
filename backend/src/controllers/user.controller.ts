@@ -8,11 +8,6 @@ import {
   updateRecruiterStatus,
   resetRecruiterPassword,
 } from "../services/user.service";
-import {
-  updateRecruiterSchema,
-  updateRecruiterStatusSchema,
-  resetRecruiterPasswordSchema,
-} from "../validators/auth.validator";
 
 const validateRecruiterId = (recruiterId: string, res: Response): boolean => {
   if (!mongoose.Types.ObjectId.isValid(recruiterId)) {
@@ -91,23 +86,12 @@ export const updateRecruiterController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = updateRecruiterSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
     const recruiterId = String(req.params.id);
     if (!validateRecruiterId(recruiterId, res)) {
       return;
     }
 
-    const recruiter = await updateRecruiter(recruiterId, validation.data);
+    const recruiter = await updateRecruiter(recruiterId, req.body);
 
     res.status(200).json({
       success: true,
@@ -147,17 +131,6 @@ export const updateRecruiterStatusController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = updateRecruiterStatusSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
     const recruiterId = String(req.params.id);
     if (!validateRecruiterId(recruiterId, res)) {
       return;
@@ -165,7 +138,7 @@ export const updateRecruiterStatusController = async (
 
     const recruiter = await updateRecruiterStatus(
       recruiterId,
-      validation.data
+      req.body
     );
 
     res.status(200).json({
@@ -197,17 +170,6 @@ export const resetRecruiterPasswordController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = resetRecruiterPasswordSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
     const recruiterId = String(req.params.id);
     if (!validateRecruiterId(recruiterId, res)) {
       return;
@@ -215,7 +177,7 @@ export const resetRecruiterPasswordController = async (
 
     const recruiter = await resetRecruiterPassword(
       recruiterId,
-      validation.data.password
+      req.body.password
     );
 
     res.status(200).json({

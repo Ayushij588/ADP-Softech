@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authorizeRoles } from "../middleware/role.middleware";
+import { validateRequest } from "../middleware/validate.middleware";
+import { applicationQuerySchema } from "../validators/application.validator";
 
 import {
   createApplicationController,
@@ -21,6 +23,7 @@ router.get(
   "/",
   authMiddleware,
   authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ query: applicationQuerySchema }),
   getAllApplicationsController
 );
 

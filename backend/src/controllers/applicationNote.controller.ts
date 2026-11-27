@@ -13,9 +13,9 @@ export const createApplicationNoteController = async (
 ): Promise<void> => {
   try {
     const { applicationId, note } = req.body;
-    const recruiterId = req.user?.userId;
+    const access = req.user;
 
-    if (!recruiterId) {
+    if (!access) {
       res.status(401).json({
         success: false,
         message: "Authenticated user not found",
@@ -49,8 +49,9 @@ export const createApplicationNoteController = async (
 
     const applicationNote = await createApplicationNote(
       applicationId,
-      recruiterId,
-      note
+      access.userId,
+      note,
+      access
     );
 
     res.status(201).json({
@@ -78,10 +79,19 @@ export const createApplicationNoteController = async (
 };
 
 export const getApplicationNotesController = async (
-  req: Request<{ applicationId: string }>,
+  req: AuthRequest & Request<{ applicationId: string }>,
   res: Response
 ): Promise<void> => {
   try {
+    const access = req.user;
+    if (!access) {
+      res.status(401).json({
+        success: false,
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const { applicationId } = req.params;
 
     if (!applicationId) {
@@ -100,7 +110,7 @@ export const getApplicationNotesController = async (
       return;
     }
 
-    const notes = await getApplicationNotes(applicationId);
+    const notes = await getApplicationNotes(applicationId, access);
 
     res.status(200).json({
       success: true,

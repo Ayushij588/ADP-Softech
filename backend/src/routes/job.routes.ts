@@ -12,6 +12,13 @@ import {
 
 import { authMiddleware } from "../middleware/auth.middleware";
 import { authorizeRoles } from "../middleware/role.middleware";
+import { validateRequest } from "../middleware/validate.middleware";
+import {
+  createJobSchema,
+  publishJobSchema,
+  updateJobSchema,
+  updateJobStatusSchema,
+} from "../validators/job.validator";
 
 const router = Router();
 
@@ -20,6 +27,7 @@ router.post(
   "/",
   authMiddleware,
   authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ body: createJobSchema }),
   createJobController
 );
 
@@ -44,6 +52,7 @@ router.patch(
   "/:id",
   authMiddleware,
   authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ body: updateJobSchema }),
   updateJobController
 );
 
@@ -52,6 +61,7 @@ router.patch(
   "/:id/status",
   authMiddleware,
   authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ body: updateJobStatusSchema }),
   updateJobStatusController
 );
 
@@ -60,6 +70,7 @@ router.patch(
   "/:id/publication",
   authMiddleware,
   authorizeRoles("super_admin", "recruiter"),
+  validateRequest({ body: publishJobSchema }),
   updateJobPublicationController
 );
 

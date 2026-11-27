@@ -3,10 +3,11 @@ import nodemailer, { type Transporter } from "nodemailer";
 import Application from "../models/Application";
 import ApplicationVerification from "../models/ApplicationVerification";
 import Candidate from "../models/Candidate";
+import PendingCandidate from "../models/PendingCandidate";
 import Job from "../models/Job";
 import { env } from "../config/env";
+import { APPLICATION_VERIFICATION_TTL_MS } from "../constants/applicationVerification";
 
-const CODE_TTL_MS = 10 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
 const MAX_VERIFICATION_ATTEMPTS = 5;
 
@@ -69,11 +70,21 @@ export const requestApplicationVerification = async (
     return;
   }
 
-  const candidate = await Candidate.findById(candidateId).select("email");
+  const existingCandidate = await Candidate.findById(candidateId).select(
+    "email consent"
+  );
+  const pendingCandidate = existingCandidate
+    ? null
+    : await PendingCandidate.findById(candidateId).select("email consent");
+  const candidate = existingCandidate ?? pendingCandidate;
   const job = await Job.findById(jobId).select("status isPublished");
 
   if (
     !candidate ||
+    candidate.consent !== true ||
+    !candidate.consentAt ||
+    (pendingCandidate &&
+      pendingCandidate.expiresAt.getTime() <= Date.now()) ||
     !job ||
     job.status !== "active" ||
     !job.isPublished
@@ -92,6 +103,7 @@ export const requestApplicationVerification = async (
 
   const now = new Date();
   const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+  const expiresAt = new Date(now.getTime() + APPLICATION_VERIFICATION_TTL_MS);
   const codeDigest = verificationCodeDigest(
     candidate._id.toString(),
     job._id.toString(),
@@ -108,7 +120,7 @@ export const requestApplicationVerification = async (
       $set: {
         job: job._id,
         codeDigest,
-        expiresAt: new Date(now.getTime() + CODE_TTL_MS),
+        expiresAt,
         attempts: 0,
         lastSentAt: now,
         deliveryConfirmed: false,
@@ -123,7 +135,7 @@ export const requestApplicationVerification = async (
         candidate: candidate._id,
         job: job._id,
         codeDigest,
-        expiresAt: new Date(now.getTime() + CODE_TTL_MS),
+        expiresAt,
         attempts: 0,
         lastSentAt: now,
         deliveryConfirmed: false,
@@ -135,6 +147,13 @@ export const requestApplicationVerification = async (
 
       throw error;
     }
+  }
+
+  if (pendingCandidate) {
+    await PendingCandidate.updateOne(
+      { _id: pendingCandidate._id },
+      { $set: { expiresAt } }
+    );
   }
 
   try {

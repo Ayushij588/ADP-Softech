@@ -12,12 +12,6 @@ import {
   deleteJob,
   type JobAccessContext,
 } from "../services/job.service";
-import {
-  createJobSchema,
-  publishJobSchema,
-  updateJobSchema,
-  updateJobStatusSchema,
-} from "../validators/job.validator";
 
 const notFoundMessages = new Set([
   "Job not found",
@@ -118,16 +112,7 @@ export const createJobController = async (
   }
 
   try {
-    const validation = createJobSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid job data",
-      });
-      return;
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(validation.data.client)) {
+    if (!mongoose.Types.ObjectId.isValid(req.body.client)) {
       res.status(400).json({
         success: false,
         message: "Invalid client ID",
@@ -135,7 +120,7 @@ export const createJobController = async (
       return;
     }
 
-    const job = await createJob(validation.data, access);
+    const job = await createJob(req.body, access);
 
     res.status(201).json({
       success: true,
@@ -218,18 +203,9 @@ export const updateJobController = async (
       return;
     }
 
-    const validation = updateJobSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid job data",
-      });
-      return;
-    }
-
     if (
-      validation.data.client !== undefined &&
-      !mongoose.Types.ObjectId.isValid(validation.data.client)
+      req.body.client !== undefined &&
+      !mongoose.Types.ObjectId.isValid(req.body.client)
     ) {
       res.status(400).json({
         success: false,
@@ -238,7 +214,7 @@ export const updateJobController = async (
       return;
     }
 
-    const job = await updateJob(id, validation.data, access);
+    const job = await updateJob(id, req.body, access);
 
     res.status(200).json({
       success: true,
@@ -267,16 +243,7 @@ export const updateJobStatusController = async (
       return;
     }
 
-    const validation = updateJobStatusSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid job status",
-      });
-      return;
-    }
-
-    const job = await updateJobStatus(id, validation.data.status, access);
+    const job = await updateJobStatus(id, req.body.status, access);
 
     res.status(200).json({
       success: true,
@@ -305,26 +272,16 @@ export const updateJobPublicationController = async (
       return;
     }
 
-    const validation = publishJobSchema.safeParse(req.body);
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message:
-          validation.error.issues[0]?.message ?? "Invalid publication status",
-      });
-      return;
-    }
-
     const job = await updateJobPublication(
       id,
-      validation.data.isPublished,
+      req.body.isPublished,
       access
     );
 
     res.status(200).json({
       success: true,
       message: `Job ${
-        validation.data.isPublished ? "published" : "unpublished"
+        req.body.isPublished ? "published" : "unpublished"
       } successfully`,
       job,
     });

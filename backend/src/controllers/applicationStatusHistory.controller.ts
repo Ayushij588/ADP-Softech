@@ -1,13 +1,23 @@
 import mongoose from "mongoose";
 import type { Request, Response } from "express";
+import type { AuthRequest } from "../middleware/auth.middleware";
 import { getStatusHistory } from "../services/applicationStatusHistory.service";
 
 // Get application status history
 export const getStatusHistoryController = async (
-  req: Request<{ applicationId: string }>,
+  req: AuthRequest & Request<{ applicationId: string }>,
   res: Response
 ): Promise<void> => {
   try {
+    const access = req.user;
+    if (!access) {
+      res.status(401).json({
+        success: false,
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const { applicationId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(applicationId)) {
@@ -18,7 +28,7 @@ export const getStatusHistoryController = async (
       return;
     }
 
-    const history = await getStatusHistory(applicationId);
+    const history = await getStatusHistory(applicationId, access);
 
     res.status(200).json({
       success: true,

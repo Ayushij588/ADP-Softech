@@ -9,6 +9,7 @@ import {
   getApplicationById,
   updateApplicationStatus,
 } from "../services/application.service";
+import type { ApplicationAccessContext } from "../services/applicationAccess.service";
 import { requestApplicationVerification } from "../services/applicationVerification.service";
 
 const forwardApplicationError = (
@@ -42,6 +43,8 @@ const createApplicationErrors = new Set([
   "Invalid job ID",
   "Job not found",
   "This job is not accepting applications",
+  "Consent is required",
+  "Candidate already exists with this email or mobile number",
   "Candidate has already applied for this job",
   "Unable to verify applicant email",
 ]);
@@ -109,7 +112,10 @@ export const createApplicationController = async (
       next,
       400,
       createApplicationErrors,
-      new Map([["Unable to verify applicant email", 401]])
+      new Map([
+        ["Unable to verify applicant email", 401],
+        ["Candidate already exists with this email or mobile number", 409],
+      ])
     );
   }
 };
@@ -155,18 +161,30 @@ export const requestApplicationVerificationController = async (
 };
 
 export const getAllApplicationsController = async (
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const access = req.user;
+  if (!access) {
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized access",
+    });
+    return;
+  }
+
   try {
     const { status, jobId, search } = req.query;
 
-    const applications = await getAllApplications({
-      status: status as string,
-      jobId: jobId as string,
-      search: search as string,
-    });
+    const applications = await getAllApplications(
+      {
+        status: status as string,
+        jobId: jobId as string,
+        search: search as string,
+      },
+      access
+    );
 
     res.status(200).json({
       success: true,
@@ -180,10 +198,19 @@ export const getAllApplicationsController = async (
 };
 
 export const getApplicationByIdController = async (
-  req: Request<{ id: string }>,
+  req: AuthRequest & Request<{ id: string }>,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const access: ApplicationAccessContext | undefined = req.user;
+  if (!access) {
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized access",
+    });
+    return;
+  }
+
   try {
     const { id } = req.params;
 
@@ -195,7 +222,7 @@ export const getApplicationByIdController = async (
       return;
     }
 
-    const application = await getApplicationById(id);
+    const application = await getApplicationById(id, access);
 
     res.status(200).json({
       success: true,
@@ -217,6 +244,15 @@ export const updateApplicationStatusController = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const access: ApplicationAccessContext | undefined = req.user;
+  if (!access) {
+    res.status(401).json({
+      success: false,
+      message: "Unauthorized access",
+    });
+    return;
+  }
+
   try {
     const { id } = req.params;
     const { status, remarks } = req.body;
@@ -250,6 +286,7 @@ export const updateApplicationStatusController = async (
       id,
       status,
       changedBy,
+      access,
       remarks
     );
 

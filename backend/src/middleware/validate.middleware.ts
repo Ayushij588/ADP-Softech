@@ -19,6 +19,9 @@ export const validateRequest = (schemas: ValidationSchemas) => {
       const result = schema.safeParse(req[part]);
       if (result.success) {
         validatedRequest[part] = result.data;
+        if (part === "body") {
+          req.body = result.data;
+        }
       } else {
         errors.push(
           ...result.error.issues.map((issue) => {

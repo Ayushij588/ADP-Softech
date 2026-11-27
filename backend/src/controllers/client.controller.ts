@@ -1,11 +1,6 @@
 import mongoose from "mongoose";
 import type { NextFunction, Request, Response } from "express";
 import * as clientService from "../services/client.service";
-import {
-  createClientSchema,
-  updateClientSchema,
-  updateClientStatusSchema,
-} from "../validators/client.validator";
 
 const notFoundMessages = new Set(["Client not found"]);
 const duplicateMessages = new Set([
@@ -85,18 +80,10 @@ export const createClientController = async (
   next: NextFunction
 ) => {
   try {
-    const validation = createClientSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid client data",
-      });
-    }
-
     if (
-      !validation.data.companyName.trim() ||
-      !validation.data.contactPerson.trim() ||
-      !validation.data.contactEmail.trim()
+      !req.body.companyName.trim() ||
+      !req.body.contactPerson.trim() ||
+      !req.body.contactEmail.trim()
     ) {
       return res.status(400).json({
         success: false,
@@ -104,7 +91,7 @@ export const createClientController = async (
       });
     }
 
-    const client = await clientService.createClient(validation.data);
+    const client = await clientService.createClient(req.body);
 
     return res.status(201).json({
       success: true,
@@ -170,19 +157,11 @@ export const updateClientController = async (
       return;
     }
 
-    const validation = updateClientSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid client data",
-      });
-    }
-
     if (
-      (validation.data.companyName !== undefined &&
-        !validation.data.companyName.trim()) ||
-      (validation.data.contactPerson !== undefined &&
-        !validation.data.contactPerson.trim())
+      (req.body.companyName !== undefined &&
+        !req.body.companyName.trim()) ||
+      (req.body.contactPerson !== undefined &&
+        !req.body.contactPerson.trim())
     ) {
       return res.status(400).json({
         success: false,
@@ -192,7 +171,7 @@ export const updateClientController = async (
 
     const client = await clientService.updateClient(
       id,
-      validation.data
+      req.body
     );
 
     return res.status(200).json({
@@ -217,17 +196,9 @@ export const updateClientStatusController = async (
       return;
     }
 
-    const validation = updateClientStatusSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({
-        success: false,
-        message: validation.error.issues[0]?.message ?? "Invalid client status",
-      });
-    }
-
     const client = await clientService.updateClientStatus(
       id,
-      validation.data.status
+      req.body.status
     );
 
     return res.status(200).json({

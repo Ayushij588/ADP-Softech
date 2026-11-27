@@ -1,5 +1,5 @@
 
-import mongoose from "mongoose";
+import mongoose, { type FilterQuery } from "mongoose";
 import Application, {
   type IApplication,
 } from "../models/Application";
@@ -8,10 +8,16 @@ import {
   type ApplicationStatus,
 } from "../constants/applicationStatus";
 import Candidate from "../models/Candidate";
+import PendingCandidate from "../models/PendingCandidate";
 import Job from "../models/Job";
 import { generateApplicationId } from "../utils/applicationId";
+import { finalizeCandidateIntake } from "./candidate.service";
 import { createStatusHistory } from "./applicationStatusHistory.service";
 import { consumeApplicationVerification } from "./applicationVerification.service";
+import {
+  getApplicationAccessFilter,
+  type ApplicationAccessContext,
+} from "./applicationAccess.service";
 export interface CreateApplicationInput {
   candidateId: string;
   jobId: string;
@@ -51,12 +57,29 @@ export const createApplication = async (
   }
 
   // Check candidate only after job validation to avoid exposing candidate existence.
-  const candidate = await Candidate.findById(applicationData.candidateId);
+  const existingCandidate = await Candidate.findById(applicationData.candidateId);
+  const pendingCandidate = existingCandidate
+    ? null
+    : await PendingCandidate.findById(applicationData.candidateId);
+  const applicant = pendingCandidate ?? existingCandidate;
 
-  if (!candidate) {
+  if (!applicant) {
     throw Object.assign(new Error("Unable to verify applicant email"), {
       statusCode: 401,
     });
+  }
+
+  if (
+    pendingCandidate &&
+    pendingCandidate.expiresAt.getTime() <= Date.now()
+  ) {
+    throw Object.assign(new Error("Unable to verify applicant email"), {
+      statusCode: 401,
+    });
+  }
+
+  if (applicant.consent !== true || !applicant.consentAt) {
+    throw new Error("Consent is required");
   }
 
   if (!/^\d{6}$/.test(applicationData.verificationCode)) {
@@ -66,10 +89,20 @@ export const createApplication = async (
   }
 
   await consumeApplicationVerification(
-    candidate._id.toString(),
+    applicant._id.toString(),
     job._id.toString(),
     applicationData.verificationCode
   );
+
+  const candidate = pendingCandidate
+    ? await finalizeCandidateIntake(pendingCandidate)
+    : existingCandidate;
+
+  if (!candidate) {
+    throw Object.assign(new Error("Unable to verify applicant email"), {
+      statusCode: 401,
+    });
+  }
 
   // Check duplicate application
   const existingApplication = await Application.findOne({
@@ -108,12 +141,15 @@ export const createApplication = async (
   return application;
 };
 
-export const getAllApplications = async (filters?: {
-  status?: string;
-  jobId?: string;
-  search?: string;
-}) => {
-  const query: any = {};
+export const getAllApplications = async (
+  filters: {
+    status?: string;
+    jobId?: string;
+    search?: string;
+  },
+  access: ApplicationAccessContext
+) => {
+  const conditions: FilterQuery<IApplication>[] = [];
 
   // Filter by application status
   if (filters?.status !== undefined) {
@@ -121,7 +157,7 @@ export const getAllApplications = async (filters?: {
       throw new Error("Invalid application status");
     }
 
-    query.status = filters.status;
+    conditions.push({ status: filters.status });
   }
 
   // Filter by job ID
@@ -130,7 +166,7 @@ export const getAllApplications = async (filters?: {
       throw new Error("Invalid job ID");
     }
 
-    query.job = filters.jobId;
+    conditions.push({ job: filters.jobId });
   }
 
   // Search candidate by name or email
@@ -145,8 +181,20 @@ export const getAllApplications = async (filters?: {
 
     const candidateIds = candidates.map((candidate) => candidate._id);
 
-    query.candidate = { $in: candidateIds };
+    conditions.push({ candidate: { $in: candidateIds } });
   }
+
+  const accessFilter = await getApplicationAccessFilter(access);
+  if (Object.keys(accessFilter).length > 0) {
+    conditions.push(accessFilter);
+  }
+
+  const query: FilterQuery<IApplication> =
+    conditions.length === 0
+      ? {}
+      : conditions.length === 1
+        ? conditions[0]
+        : { $and: conditions };
 
   const applications = await Application.find(query)
     .populate("candidate")
@@ -156,12 +204,19 @@ export const getAllApplications = async (filters?: {
   return applications;
 };
 
-export const getApplicationById = async (applicationId: string) => {
+export const getApplicationById = async (
+  applicationId: string,
+  access: ApplicationAccessContext
+) => {
   if (!mongoose.Types.ObjectId.isValid(applicationId)) {
     throw new Error("Invalid application ID");
   }
 
-  const application = await Application.findById(applicationId)
+  const accessFilter = await getApplicationAccessFilter(access);
+  const application = await Application.findOne({
+    _id: applicationId,
+    ...accessFilter,
+  })
     .populate("candidate")
     .populate("job");
 
@@ -175,6 +230,7 @@ export const updateApplicationStatus = async (
   applicationId: string,
   status: ApplicationStatus,
   changedBy: string,
+  access: ApplicationAccessContext,
   remarks?: string
 ) => {
   if (
@@ -195,7 +251,9 @@ export const updateApplicationStatus = async (
     let updatedApplication: IApplication | null = null;
 
     await session.withTransaction(async () => {
-      const existingApplication = await Application.findById(applicationId)
+      const accessFilter = await getApplicationAccessFilter(access, session);
+      const scopedFilter = { _id: applicationId, ...accessFilter };
+      const existingApplication = await Application.findOne(scopedFilter)
         .session(session);
 
       if (!existingApplication) {
@@ -208,8 +266,8 @@ export const updateApplicationStatus = async (
         throw new Error("Application is already in this status");
       }
 
-      updatedApplication = await Application.findByIdAndUpdate(
-        applicationId,
+      updatedApplication = await Application.findOneAndUpdate(
+        scopedFilter,
         { status },
         { new: true, runValidators: true, session }
       )

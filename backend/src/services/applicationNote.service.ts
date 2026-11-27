@@ -1,11 +1,16 @@
 import mongoose from "mongoose";
 import ApplicationNote from "../models/ApplicationNote";
 import Application from "../models/Application";
+import {
+  getApplicationAccessFilter,
+  type ApplicationAccessContext,
+} from "./applicationAccess.service";
 
 export const createApplicationNote = async (
   applicationId: string,
   recruiterId: string,
-  note: string
+  note: string,
+  access: ApplicationAccessContext
 ) => {
   if (!mongoose.Types.ObjectId.isValid(applicationId)) {
     throw new Error("Invalid application ID");
@@ -15,7 +20,11 @@ export const createApplicationNote = async (
     throw new Error("Note content is required");
   }
 
-  const application = await Application.findById(applicationId);
+  const accessFilter = await getApplicationAccessFilter(access);
+  const application = await Application.findOne({
+    _id: applicationId,
+    ...accessFilter,
+  });
 
   if (!application) {
     throw new Error("Application not found");
@@ -31,13 +40,18 @@ export const createApplicationNote = async (
 };
 
 export const getApplicationNotes = async (
-  applicationId: string
+  applicationId: string,
+  access: ApplicationAccessContext
 ) => {
   if (!mongoose.Types.ObjectId.isValid(applicationId)) {
     throw new Error("Invalid application ID");
   }
 
-  const application = await Application.findById(applicationId);
+  const accessFilter = await getApplicationAccessFilter(access);
+  const application = await Application.findOne({
+    _id: applicationId,
+    ...accessFilter,
+  });
 
   if (!application) {
     throw new Error("Application not found");

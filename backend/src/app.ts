@@ -10,6 +10,7 @@ import candidateRoutes from "./routes/candidate.routes";
 import applicationRoutes from "./routes/application.routes";
 import applicationNoteRoutes from "./routes/applicationNote.routes";
 import applicationStatusHistoryRoutes from "./routes/applicationStatusHistory.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 import errorMiddleware from "./middleware/error.middleware";
 const app: Application = express();
 
@@ -68,6 +69,9 @@ app.use("/api/application-notes", applicationNoteRoutes);
 
 // application History
 app.use("/api/application-status-history", applicationStatusHistoryRoutes);
+
+// dashboard
+app.use("/api/dashboard", dashboardRoutes);
 
 app.use(errorMiddleware);
 

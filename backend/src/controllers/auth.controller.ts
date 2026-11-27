@@ -1,6 +1,5 @@
 
 import { Request, Response } from "express";
-import { loginSchema, createRecruiterSchema } from "../validators/auth.validator";
 import { loginUser, createRecruiter } from "../services/auth.service";
 
 // Login controller
@@ -9,18 +8,7 @@ export const loginController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = loginSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
-    const result = await loginUser(validation.data);
+    const result = await loginUser(req.body);
 
     res.status(200).json({
       success: true,
@@ -49,18 +37,7 @@ export const createRecruiterController = async (
   res: Response
 ): Promise<void> => {
   try {
-    const validation = createRecruiterSchema.safeParse(req.body);
-
-    if (!validation.success) {
-      res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: validation.error.issues.map((issue) => issue.message),
-      });
-      return;
-    }
-
-    const recruiter = await createRecruiter(validation.data);
+    const recruiter = await createRecruiter(req.body);
 
     res.status(201).json({
       success: true,

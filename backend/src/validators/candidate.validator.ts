@@ -16,6 +16,8 @@ export const candidateSchema = z.object({
     .trim()
     .min(10, "Mobile number must contain at least 10 digits"),
 
+  consent: z.boolean().refine((value) => value, "Consent is required"),
+
   currentLocation: z
     .string()
     .trim()
