@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { recruitmentServices } from "@/constants/public-content";
+import { EmployerInquiryForm } from "@/components/public/employer-inquiry-form";
 
 export default function EmployersPage() {
   return (
@@ -73,6 +74,19 @@ export default function EmployersPage() {
             a list of requirements to understand the goals, working style, and
             strengths that help a person and a team succeed together.
           </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <div className="grid gap-10 lg:grid-cols-[0.35fr_0.65fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">Hiring requirements</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Tell us who you need</h2>
+            <p className="mt-4 leading-7 text-slate-600">Share the role, team and working model so our recruitment team can start with the right context.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <EmployerInquiryForm />
+          </div>
         </div>
       </section>
 

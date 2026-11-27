@@ -48,14 +48,16 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+    /* The outer div scrolls horizontally on small screens so tables never
+       push the page wider than the viewport. */
+    <div className="-mx-0 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <table className="w-full min-w-[36rem] divide-y divide-slate-200 text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
           <tr>
             {columns.map((column) => (
               <th
-                className={`px-4 py-3 font-semibold ${column.className ?? ""}`}
+                className={`px-4 py-3 font-semibold first:pl-5 last:pr-5 ${column.className ?? ""}`}
                 key={column.key}
                 scope="col"
               >
@@ -66,10 +68,10 @@ export function DataTable<T>({
         </thead>
         <tbody className="divide-y divide-slate-100">
           {rows.map((row) => (
-            <tr className="text-slate-700" key={getRowKey(row)}>
+            <tr className="text-slate-700 hover:bg-slate-50/60 transition-colors" key={getRowKey(row)}>
               {columns.map((column) => (
                 <td
-                  className={`px-4 py-3 ${column.className ?? ""}`}
+                  className={`px-4 py-3 first:pl-5 last:pr-5 ${column.className ?? ""}`}
                   key={column.key}
                 >
                   {column.render(row)}

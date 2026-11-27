@@ -4,18 +4,26 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { FieldError } from "@/components/ui/field-error";
 import { FormDialog } from "@/components/ui/form-dialog";
-import { userCreationSchema, userRoles, type UserCreationValues } from "@/lib/admin-form-schemas";
+import {
+  userCreationSchema,
+  userRoles,
+  userStatuses,
+  type UserCreationValues,
+} from "@/lib/admin-form-schemas";
 
 const fieldClassName =
   "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
 export function UserCreationDialog({
+  user,
   onClose,
-  onCreate,
+  onSave,
 }: {
+  user?: UserCreationValues & { id: string };
   onClose: () => void;
-  onCreate: (values: UserCreationValues) => void;
+  onSave: (values: UserCreationValues) => void;
 }) {
+  const isEdit = Boolean(user);
   const {
     register,
     handleSubmit,
@@ -24,22 +32,28 @@ export function UserCreationDialog({
     resolver: zodResolver(userCreationSchema),
     mode: "onBlur",
     defaultValues: {
-      name: "",
-      email: "",
-      role: "Recruitment Admin",
+      name: user?.name ?? "",
+      email: user?.email ?? "",
+      role: user?.role ?? "Recruitment Admin",
+      assignedTeam: user?.assignedTeam ?? "Engineering & Offshore",
+      status: user?.status ?? "Invited",
     },
   });
 
   return (
     <FormDialog
-      description="User details are validated locally and are not sent as an invitation."
+      description={
+        isEdit
+          ? "Update account role, team assignment, or status in the local demo list."
+          : "User details are validated locally and are not sent as an invitation."
+      }
       onClose={onClose}
-      title="Create user"
+      title={isEdit ? `Edit ${user?.name}` : "Create user"}
     >
       <form
         className="space-y-4 px-5 py-6 sm:px-7"
         noValidate
-        onSubmit={handleSubmit(onCreate)}
+        onSubmit={handleSubmit(onSave)}
       >
         <label className="block text-sm font-medium text-slate-700">
           Full name
@@ -62,27 +76,63 @@ export function UserCreationDialog({
             aria-invalid={Boolean(errors.email)}
             autoComplete="email"
             className={fieldClassName}
-            placeholder="name@example.com"
+            placeholder="name@adpsoftech.example"
             type="email"
           />
           <FieldError id="user-email-error" message={errors.email?.message} />
         </label>
 
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-medium text-slate-700">
+            Role
+            <select
+              {...register("role")}
+              aria-describedby={errors.role ? "user-role-error" : undefined}
+              aria-invalid={Boolean(errors.role)}
+              className={fieldClassName}
+            >
+              {userRoles.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+            <FieldError id="user-role-error" message={errors.role?.message} />
+          </label>
+
+          <label className="block text-sm font-medium text-slate-700">
+            Account status
+            <select
+              {...register("status")}
+              aria-describedby={errors.status ? "user-status-error" : undefined}
+              aria-invalid={Boolean(errors.status)}
+              className={fieldClassName}
+            >
+              {userStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+            <FieldError id="user-status-error" message={errors.status?.message} />
+          </label>
+        </div>
+
         <label className="block text-sm font-medium text-slate-700">
-          Role
-          <select
-            {...register("role")}
-            aria-describedby={errors.role ? "user-role-error" : undefined}
-            aria-invalid={Boolean(errors.role)}
+          Assigned team / scope
+          <input
+            {...register("assignedTeam")}
+            aria-describedby={
+              errors.assignedTeam ? "user-team-error" : undefined
+            }
+            aria-invalid={Boolean(errors.assignedTeam)}
             className={fieldClassName}
-          >
-            {userRoles.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </select>
-          <FieldError id="user-role-error" message={errors.role?.message} />
+            placeholder="e.g. Engineering & Offshore"
+          />
+          <FieldError
+            id="user-team-error"
+            message={errors.assignedTeam?.message}
+          />
         </label>
 
         <div className="flex flex-col-reverse justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row">
@@ -98,7 +148,7 @@ export function UserCreationDialog({
             disabled={isSubmitting}
             type="submit"
           >
-            Add to demo list
+            {isEdit ? "Save changes" : "Create user"}
           </button>
         </div>
       </form>

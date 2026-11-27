@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ContactInquiryForm } from "@/components/public/contact-inquiry-form";
 
 export default function ContactPage() {
   return (
@@ -55,44 +56,7 @@ export default function ContactPage() {
           <p className="mt-2 text-sm text-slate-600">
             This sample form is not connected to a submission service.
           </p>
-          <form className="mt-7 space-y-5">
-            <label className="block text-sm font-medium text-slate-700">
-              Your name
-              <input
-                autoComplete="name"
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                name="name"
-                placeholder="Name"
-                type="text"
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Work email
-              <input
-                autoComplete="email"
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                name="email"
-                placeholder="you@company.com"
-                type="email"
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              How can we help?
-              <textarea
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
-                name="message"
-                placeholder="Tell us a little about your enquiry"
-                rows={4}
-              />
-            </label>
-            <button
-              className="cursor-not-allowed rounded-lg bg-slate-300 px-5 py-3 text-sm font-semibold text-slate-600"
-              disabled
-              type="button"
-            >
-              Enquiry form coming soon
-            </button>
-          </form>
+          <ContactInquiryForm />
         </div>
       </section>
     </main>

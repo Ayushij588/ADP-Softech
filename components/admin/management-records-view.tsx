@@ -12,6 +12,7 @@ import type {
   AdminManagementRecord,
   AdminRecordColumn,
 } from "@/constants/admin-content";
+import Link from "next/link";
 
 type ManagementRecordsViewProps = {
   eyebrow: string;
@@ -20,26 +21,27 @@ type ManagementRecordsViewProps = {
   records: readonly AdminManagementRecord[];
   columns: readonly AdminRecordColumn[];
   searchLabel: string;
+  detailHrefPrefix?: string;
 };
 
 const pageSize = 5;
 
 const statusTones: Record<
   string,
-  "neutral" | "success" | "warning" | "danger" | "info"
+  "neutral" | "success" | "warning" | "hold" | "danger" | "closed" | "info"
 > = {
   active: "success",
   available: "success",
   published: "success",
-  shortlisted: "success",
+  shortlisted: "info",
   reviewed: "info",
   "interview scheduled": "info",
   new: "info",
   "in review": "warning",
   "needs review": "warning",
   draft: "neutral",
-  closed: "neutral",
-  "on hold": "neutral",
+  closed: "closed",
+  "on hold": "hold",
   rejected: "danger",
 };
 
@@ -54,6 +56,7 @@ export function ManagementRecordsView({
   records,
   columns,
   searchLabel,
+  detailHrefPrefix,
 }: ManagementRecordsViewProps) {
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -91,6 +94,18 @@ export function ManagementRecordsView({
         ),
     }),
   );
+  if (detailHrefPrefix) {
+    tableColumns.push({
+      key: "actions",
+      header: "Actions",
+      className: "text-right",
+      render: (record) => (
+        <Link className="rounded-md px-2 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50" href={`${detailHrefPrefix}/${record.id}`}>
+          View details
+        </Link>
+      ),
+    });
+  }
 
   function updateSearch(value: string) {
     setQuery(value);

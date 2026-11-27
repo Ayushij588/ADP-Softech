@@ -8,6 +8,7 @@ import {
   type DataTableColumn,
 } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useToast } from "@/components/ui/toast";
 import { platformRoles } from "@/constants/super-admin-content";
 import type { RoleCreationValues } from "@/lib/admin-form-schemas";
 
@@ -20,7 +21,7 @@ type RoleRecord = {
   status: string;
 };
 
-const roleColumns: DataTableColumn<RoleRecord>[] = [
+const baseRoleColumns: DataTableColumn<RoleRecord>[] = [
   {
     key: "name",
     header: "Role",
@@ -35,47 +36,110 @@ const roleColumns: DataTableColumn<RoleRecord>[] = [
   {
     key: "permissions",
     header: "Permission summary",
-    render: (role) => role.permissions,
+    render: (role) => (
+      <span className="block max-w-md text-xs leading-5 text-slate-600">
+        {role.permissions}
+      </span>
+    ),
   },
   {
     key: "status",
     header: "Status",
-    render: (role) => <StatusBadge label={role.status} tone="success" />,
+    render: (role) => (
+      <StatusBadge
+        label={role.status}
+        tone={role.status === "Active" ? "success" : "neutral"}
+      />
+    ),
   },
 ];
 
 export function RolesManagementView() {
+  const { toast } = useToast();
   const [roles, setRoles] = useState<RoleRecord[]>(() =>
     platformRoles.map((role) => ({ ...role })),
   );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [feedback, setFeedback] = useState("");
-  const nextRoleNumber = useRef(5);
+  const [dialogRole, setDialogRole] = useState<RoleRecord | null | undefined>(
+    undefined,
+  );
+  const nextRoleNumber = useRef(6);
 
-  function createRole(values: RoleCreationValues) {
-    const id = `ROLE-${String(nextRoleNumber.current).padStart(2, "0")}`;
-    nextRoleNumber.current += 1;
-    setRoles((currentRoles) => [
-      {
-        id,
-        name: values.name,
-        users: "0 users",
-        scope: values.description,
-        permissions: values.permissions.join(", "),
-        status: "Active",
-      },
-      ...currentRoles,
-    ]);
-    setIsDialogOpen(false);
-    setFeedback(
-      `${values.name} was added to the temporary demo list. No platform permissions were changed.`,
-    );
+  function saveRole(values: RoleCreationValues) {
+    if (dialogRole) {
+      setRoles((currentRoles) =>
+        currentRoles.map((role) =>
+          role.id === dialogRole.id
+            ? {
+                ...role,
+                name: values.name,
+                scope: values.description,
+                permissions: values.permissions.join(", "),
+              }
+            : role,
+        ),
+      );
+      toast(`${values.name} permissions updated in local demo state.`, "success");
+    } else {
+      const id = `ROLE-${String(nextRoleNumber.current).padStart(2, "0")}`;
+      nextRoleNumber.current += 1;
+      setRoles((currentRoles) => [
+        {
+          id,
+          name: values.name,
+          users: "0 users",
+          scope: values.description,
+          permissions: values.permissions.join(", "),
+          status: "Active",
+        },
+        ...currentRoles,
+      ]);
+      toast(`${values.name} added to local demo roles.`, "success");
+    }
+    setDialogRole(undefined);
   }
+
+  function toggleRoleStatus(roleId: string) {
+    setRoles((currentRoles) =>
+      currentRoles.map((role) =>
+        role.id === roleId
+          ? { ...role, status: role.status === "Active" ? "Inactive" : "Active" }
+          : role,
+      ),
+    );
+    toast("Role status updated in local demo.", "info");
+  }
+
+  const roleColumns: DataTableColumn<RoleRecord>[] = [
+    ...baseRoleColumns,
+    {
+      key: "actions",
+      header: "Actions",
+      className: "text-right",
+      render: (role) => (
+        <div className="flex justify-end gap-2">
+          <button
+            className="whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+            onClick={() => setDialogRole(role)}
+            type="button"
+          >
+            Edit permissions
+          </button>
+          <button
+            className="whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+            onClick={() => toggleRoleStatus(role.id)}
+            type="button"
+          >
+            {role.status === "Active" ? "Deactivate" : "Activate"}
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
       <SuperAdminPageHeader
-        description="Review sample role definitions and create a local demo role."
+        description="Configure RBAC roles and assign granular permissions across Recruitment Admin and Super Admin capabilities."
         title="Roles & Permissions"
       />
       <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -85,28 +149,17 @@ export function RolesManagementView() {
               Platform roles
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Permission summaries are examples and are not enforced by this UI.
+              Backend API permission enforcement is simulated in this frontend preview.
             </p>
           </div>
           <button
             className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
-            onClick={() => {
-              setFeedback("");
-              setIsDialogOpen(true);
-            }}
+            onClick={() => setDialogRole(null)}
             type="button"
           >
             Create role
           </button>
         </div>
-        {feedback && (
-          <p
-            className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900"
-            role="status"
-          >
-            {feedback}
-          </p>
-        )}
         <DataTable
           caption="Roles and permissions"
           columns={roleColumns}
@@ -114,10 +167,12 @@ export function RolesManagementView() {
           rows={roles}
         />
       </section>
-      {isDialogOpen && (
+      {dialogRole !== undefined && (
         <RoleCreationDialog
-          onClose={() => setIsDialogOpen(false)}
-          onCreate={createRole}
+          key={dialogRole?.id ?? "new-role"}
+          onClose={() => setDialogRole(undefined)}
+          onSave={saveRole}
+          role={dialogRole ?? undefined}
         />
       )}
     </main>

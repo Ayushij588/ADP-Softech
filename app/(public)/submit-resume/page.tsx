@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ResumeSubmissionForm } from "@/components/public/resume-submission-form";
 
 export default function SubmitResumePage() {
@@ -21,7 +22,9 @@ export default function SubmitResumePage() {
 
       <section className="mx-auto grid max-w-7xl gap-12 px-6 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <ResumeSubmissionForm />
+          <Suspense fallback={<p className="text-sm text-slate-500">Loading application form...</p>}>
+            <ResumeSubmissionForm />
+          </Suspense>
         </div>
         <aside className="h-fit rounded-2xl bg-slate-950 p-6 text-white">
           <p className="text-sm font-semibold text-blue-300">What happens next</p>

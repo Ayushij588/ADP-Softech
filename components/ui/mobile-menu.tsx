@@ -16,12 +16,12 @@ export function MobileMenu({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         aria-controls="mobile-site-navigation"
         aria-expanded={isOpen}
         aria-label={isOpen ? "Close menu" : "Open menu"}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
         onClick={() => setIsOpen((open) => !open)}
         type="button"
       >

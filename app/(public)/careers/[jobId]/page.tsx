@@ -57,6 +57,9 @@ async function CareerDetailsContent({ params }: CareerDetailsPageProps) {
             {job.employmentType} <span aria-hidden="true">·</span>{" "}
             {job.workMode}
           </p>
+          <p className="mt-3 text-sm text-blue-200">
+            Job ID: {job.jobId} · {job.experience} experience · Applications close {job.deadline}
+          </p>
         </div>
       </section>
 
@@ -99,7 +102,7 @@ async function CareerDetailsContent({ params }: CareerDetailsPageProps) {
           </p>
           <Link
             className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-800"
-            href="/submit-resume"
+            href={`/submit-resume?jobId=${encodeURIComponent(job.jobId)}&jobTitle=${encodeURIComponent(job.title)}`}
           >
             Submit your resume
           </Link>

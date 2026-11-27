@@ -2,8 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { openPositions } from "@/constants/public-content";
 
 const maxResumeSize = 10 * 1024 * 1024;
 const allowedResumeExtension = /\.(pdf|doc|docx)$/i;
@@ -118,16 +120,25 @@ function FieldError({ message, id }: { message?: string; id: string }) {
 }
 
 export function ResumeSubmissionForm() {
+  const searchParams = useSearchParams();
+  const selectedJobId = searchParams.get("jobId") ?? "";
+  const selectedJobTitle = searchParams.get("jobTitle") ?? "";
   const [validationMessage, setValidationMessage] = useState("");
+  const [submittedApplication, setSubmittedApplication] = useState<null | {
+    applicationId: string;
+    jobId: string;
+    jobTitle: string;
+  }>(null);
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ResumeSubmissionValues>({
     resolver: zodResolver(resumeSubmissionSchema),
     mode: "onBlur",
     defaultValues: {
-      jobId: "",
+      jobId: selectedJobId,
       fullName: "",
       email: "",
       mobileNumber: "",
@@ -139,12 +150,39 @@ export function ResumeSubmissionForm() {
   });
 
   function onValidForm() {
-    setValidationMessage(
-      "Your details passed validation. This demo does not send or store your information.",
-    );
+    const formValues = getValues();
+    const jobId = formValues.jobId.trim();
+    const matchingJob = openPositions.find((job) => job.jobId === jobId);
+    if (!matchingJob) {
+      setValidationMessage("The Job ID is invalid or the job is unavailable.");
+      return;
+    }
+    if (matchingJob.status !== "Published") {
+      setValidationMessage("This job is closed or unpublished and is not accepting applications.");
+      return;
+    }
+    setSubmittedApplication({
+      applicationId: `ADP-APP-20261126-${String(openPositions.indexOf(matchingJob) + 1).padStart(4, "0")}`,
+      jobId: matchingJob.jobId,
+      jobTitle: matchingJob.title,
+    });
+    setValidationMessage("");
   }
 
   return (
+    <>
+    {submittedApplication ? (
+      <section aria-labelledby="application-confirmation-heading" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
+        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Application received</p>
+        <h2 className="mt-3 text-2xl font-semibold text-slate-950" id="application-confirmation-heading">Thank you for your submission.</h2>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-white p-4"><dt className="text-xs font-semibold uppercase text-slate-500">Application ID</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.applicationId}</dd></div>
+          <div className="rounded-xl bg-white p-4"><dt className="text-xs font-semibold uppercase text-slate-500">Job ID</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.jobId}</dd></div>
+          <div className="rounded-xl bg-white p-4 sm:col-span-2"><dt className="text-xs font-semibold uppercase text-slate-500">Position</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.jobTitle}</dd></div>
+        </dl>
+        <p className="mt-5 text-sm leading-6 text-slate-700">Your application has been received and is subject to review. This confirmation does not promise an interview or selection.</p>
+      </section>
+    ) : (
     <form
       className="space-y-6"
       noValidate
@@ -155,6 +193,13 @@ export function ResumeSubmissionForm() {
         <h2 className="text-xl font-semibold text-slate-950">
           Your information
         </h2>
+        {selectedJobId && (
+          <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Selected job</p>
+            <p className="mt-1 font-semibold text-slate-950">{selectedJobTitle || "Position details"}</p>
+            <p className="mt-1 text-sm text-slate-600">Job ID: {selectedJobId}</p>
+          </div>
+        )}
         <p className="mt-2 text-sm leading-6 text-slate-600">
           Complete each field below. This form is validated locally and is not
           connected to a submission service.
@@ -382,5 +427,7 @@ export function ResumeSubmissionForm() {
         )}
       </div>
     </form>
+    )}
+    </>
   );
 }

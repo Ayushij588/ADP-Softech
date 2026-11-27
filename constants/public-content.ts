@@ -1,10 +1,15 @@
 export type PublicJob = {
   id: string;
+  jobId: string;
   title: string;
   department: string;
   location: string;
   employmentType: string;
   workMode: string;
+  experience: string;
+  skills: readonly string[];
+  deadline: string;
+  status: "Published" | "Closed";
   summary: string;
   description: string;
   responsibilities: readonly string[];
@@ -53,11 +58,16 @@ export const recruitmentServices = [
 export const openPositions: readonly PublicJob[] = [
   {
     id: "senior-software-engineer",
+    jobId: "ADP-JD-1001",
     title: "Senior Software Engineer",
     department: "Technology",
     location: "Bengaluru, India",
     employmentType: "Full-time",
     workMode: "Hybrid",
+    experience: "5-8 years",
+    skills: ["React", "TypeScript", "Node.js"],
+    deadline: "15 Dec 2026",
+    status: "Published",
     summary:
       "Help a product engineering team build reliable digital experiences at scale.",
     description:
@@ -75,11 +85,16 @@ export const openPositions: readonly PublicJob[] = [
   },
   {
     id: "talent-acquisition-specialist",
+    jobId: "ADP-JD-1002",
     title: "Talent Acquisition Specialist",
     department: "People & Culture",
     location: "Mumbai, India",
     employmentType: "Contract",
     workMode: "On-site",
+    experience: "3-6 years",
+    skills: ["Recruitment", "Sourcing", "HR"],
+    deadline: "12 Dec 2026",
+    status: "Published",
     summary:
       "Create a thoughtful candidate experience while supporting a growing team.",
     description:
@@ -97,11 +112,16 @@ export const openPositions: readonly PublicJob[] = [
   },
   {
     id: "business-development-manager",
+    jobId: "ADP-JD-1003",
     title: "Business Development Manager",
     department: "Sales",
     location: "Pune, India",
     employmentType: "Full-time",
     workMode: "Hybrid",
+    experience: "6-10 years",
+    skills: ["Sales", "Partnerships", "SaaS"],
+    deadline: "20 Dec 2026",
+    status: "Published",
     summary:
       "Build trusted client relationships and identify opportunities for growth.",
     description:
