@@ -1,10 +1,110 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
+const ANIMATION_DURATION_MS = 2000;
+
 export function CompactStats() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const hasCompletedRef = useRef(false);
+  const [counts, setCounts] = useState({
+    placed: 0,
+    partners: 0,
+    countries: 0,
+  });
+
+  useEffect(() => {
+    if (hasCompletedRef.current) return;
+
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const setFinalValues = () => {
+      hasCompletedRef.current = true;
+      setCounts({
+        placed: 500,
+        partners: 120,
+        countries: 15,
+      });
+    };
+
+    if (prefersReducedMotion || typeof IntersectionObserver === "undefined") {
+      setFinalValues();
+      return;
+    }
+
+    const element = sectionRef.current;
+    if (!element) return;
+
+    let animationFrameId: number | null = null;
+    let started = false;
+
+    const startAnimation = () => {
+      if (started || hasCompletedRef.current) return;
+      started = true;
+
+      const startTime = performance.now();
+
+      const tick = (now: number) => {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / ANIMATION_DURATION_MS, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        setCounts((prev) => {
+          const nextPlaced = Math.round(500 * easedProgress);
+          const nextPartners = Math.round(120 * easedProgress);
+          const nextCountries = Math.round(15 * easedProgress);
+
+          if (
+            prev.placed === nextPlaced &&
+            prev.partners === nextPartners &&
+            prev.countries === nextCountries
+          ) {
+            return prev;
+          }
+
+          return {
+            placed: nextPlaced,
+            partners: nextPartners,
+            countries: nextCountries,
+          };
+        });
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(tick);
+        } else {
+          setFinalValues();
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          observer.disconnect();
+          startAnimation();
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, []);
+
   const stats = [
     {
       id: "placed",
-      value: "500+",
+      value: `${counts.placed}+`,
       label: "Professionals Placed",
       icon: (
         <svg
@@ -25,7 +125,7 @@ export function CompactStats() {
     },
     {
       id: "partners",
-      value: "120+",
+      value: `${counts.partners}+`,
       label: "Hiring Partners",
       icon: (
         <svg
@@ -46,7 +146,7 @@ export function CompactStats() {
     },
     {
       id: "countries",
-      value: "15+",
+      value: `${counts.countries}+`,
       label: "Countries Served",
       icon: (
         <svg
@@ -89,7 +189,10 @@ export function CompactStats() {
   ];
 
   return (
-    <section className="relative z-20 -mt-6 sm:-mt-8 px-4 sm:px-6 lg:px-8">
+    <section
+      ref={sectionRef}
+      className="relative z-20 -mt-6 sm:-mt-8 px-4 sm:px-6 lg:px-8"
+    >
       <div className="mx-auto max-w-7xl">
         <div
           className="rounded-2xl sm:rounded-3xl border border-[#DCE8ED] bg-white p-5 sm:p-6 lg:p-7 shadow-lg"
@@ -109,7 +212,7 @@ export function CompactStats() {
                   {stat.icon}
                 </div>
                 <div>
-                  <p className="text-xl sm:text-2xl lg:text-[26px] font-extrabold tracking-tight text-[#152B38] leading-none">
+                  <p className="text-xl sm:text-2xl lg:text-[26px] font-extrabold tracking-tight text-[#152B38] leading-none tabular-nums">
                     {stat.value}
                   </p>
                   <p className="mt-1 text-xs sm:text-sm font-semibold text-[#4F6A78]">

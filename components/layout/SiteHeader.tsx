@@ -79,66 +79,6 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full">
-      {/* Top Utility Bar */}
-      <div className="border-b border-[#0C4154] bg-[#07394B] text-xs text-[#DCEFF5] hidden md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-1.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6">
-            <a
-              href="mailto:hr@adpsoftech.com"
-              className="flex items-center gap-1.5 hover:text-white transition"
-            >
-              <svg
-                className="h-3.5 w-3.5 text-[#14B8C4]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <span>hr@adpsoftech.com</span>
-            </a>
-            <span className="text-[#17647B]">|</span>
-            <a
-              href="tel:+919876543210"
-              className="flex items-center gap-1.5 hover:text-white transition"
-            >
-              <svg
-                className="h-3.5 w-3.5 text-[#14B8C4]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-              <span>+91 98765 43210</span>
-            </a>
-          </div>
-          <div className="flex items-center gap-4 text-[11px] font-medium text-[#DCEFF5]/90">
-            <Link href="/careers" className="hover:text-white transition">
-              Careers
-            </Link>
-            <span className="text-[#17647B]">|</span>
-            <Link href="/contact" className="hover:text-white transition">
-              Contact Us
-            </Link>
-            <span className="text-[#17647B]">|</span>
-            <Link href="/employers" className="hover:text-white transition">
-              Partner With Us
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main Header Bar */}
       <div
         className={`w-full transition-all duration-200 ${
@@ -368,7 +308,7 @@ export function SiteHeader() {
 
             {/* Hire Talent CTA in Primary Brand Color */}
             <Link
-              href="/employers"
+              href="/careers"
               className="group inline-flex items-center gap-1.5 rounded-full bg-[oklch(39.8%_0.07_227.392)] px-5 py-2 text-xs md:text-sm font-semibold text-white shadow-xs transition hover:bg-[#07394B]"
             >
               <span>Hire Talent</span>
@@ -384,7 +324,7 @@ export function SiteHeader() {
           {/* Mobile menu toggle */}
           <div className="flex items-center gap-2 lg:hidden">
             <Link
-              href="/employers"
+              href="/careers"
               className="inline-flex sm:hidden items-center rounded-full bg-[oklch(39.8%_0.07_227.392)] px-3 py-1.5 text-xs font-semibold text-white"
             >
               Hire Talent
@@ -469,7 +409,7 @@ export function SiteHeader() {
 
             <div className="mt-3 pt-3 border-t border-[#DCE8ED] flex flex-col gap-2">
               <Link
-                href="/employers"
+                href="/careers"
                 onClick={closeAllMenus}
                 className="w-full text-center rounded-full bg-[oklch(39.8%_0.07_227.392)] px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#07394B]"
               >

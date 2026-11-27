@@ -221,7 +221,7 @@ export function SiteFooter() {
 
         {/* Bottom Legal Bar */}
         <div className="mt-12 pt-6 border-t border-[#0E495E] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#DCEFF5]/70">
-          <p>© 2025 ADP Softech. All Rights Reserved.</p>
+          <p>© 2026 ADP Softech. All Rights Reserved.</p>
           <div className="flex items-center gap-6">
             <Link href="/privacy-policy" className="hover:text-white transition">
               Privacy Policy
