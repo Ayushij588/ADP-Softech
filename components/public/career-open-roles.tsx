@@ -13,6 +13,13 @@ type CareerOpenRolesProps = {
 const selectClasses =
   "mt-2 w-full rounded-xl border border-[#DCE8ED] bg-white px-3 py-2 text-xs sm:text-sm text-[#152B38] outline-none transition focus:border-[oklch(39.8%_0.07_227.392)] focus:ring-2 focus:ring-[#DCEFF5]";
 
+const EMPLOYMENT_TYPE_OPTIONS = [
+  "Full-time",
+  "Part-time",
+  "Remote",
+  "Hybrid",
+] as const;
+
 export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
@@ -27,10 +34,6 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
     () => [...new Set(jobs.map((job) => job.department))].sort(),
     [jobs],
   );
-  const employmentTypes = useMemo(
-    () => [...new Set(jobs.map((job) => job.employmentType))].sort(),
-    [jobs],
-  );
 
   const filteredJobs = useMemo(() => {
     const searchTerm = query.trim().toLowerCase();
@@ -42,11 +45,18 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
           (value) => value.toLowerCase().includes(searchTerm),
         );
 
+      const matchesEmploymentType =
+        !employmentType ||
+        (employmentType === "Remote" || employmentType === "Hybrid"
+          ? job.workMode.toLowerCase() === employmentType.toLowerCase() ||
+            job.employmentType.toLowerCase() === employmentType.toLowerCase()
+          : job.employmentType.toLowerCase() === employmentType.toLowerCase());
+
       return (
         matchesSearch &&
         (!location || job.location === location) &&
         (!department || job.department === department) &&
-        (!employmentType || job.employmentType === employmentType)
+        matchesEmploymentType
       );
     });
   }, [department, employmentType, jobs, location, query]);
@@ -146,7 +156,7 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
               value={employmentType}
             >
               <option value="">All Types</option>
-              {employmentTypes.map((item) => (
+              {EMPLOYMENT_TYPE_OPTIONS.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
