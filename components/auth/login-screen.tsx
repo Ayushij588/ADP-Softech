@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { ApiClientError } from "@/services/api-client";
+import { loginWithCredentials, logoutSession } from "@/services/auth.service";
 
 export type LoginPortal = "admin" | "super-admin";
 
@@ -49,19 +51,43 @@ export function LoginScreen({ portal }: { portal: LoginPortal }) {
   const [password, setPassword] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedback, setFeedback] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!email.trim() || !password.trim()) {
       setFeedback("Enter both email address and password to continue.");
       return;
     }
     if (portal === "super-admin" && mfaCode.trim() && !/^\d{6}$/.test(mfaCode.trim())) {
-      setFeedback("Enter a valid 6-digit MFA verification code or leave blank in demo mode.");
+      setFeedback("Enter a valid 6-digit MFA verification code or leave blank.");
       return;
     }
-    router.push(content.dashboardHref);
+
+    setIsSubmitting(true);
+    setFeedback("");
+    try {
+      const session = await loginWithCredentials(email.trim(), password);
+      if (portal === "super-admin" && session.user.role !== "super_admin") {
+        logoutSession();
+        setFeedback("This account does not have Super Admin access.");
+        return;
+      }
+      router.push(
+        session.user.role === "super_admin"
+          ? "/super-admin/dashboard"
+          : "/admin/dashboard",
+      );
+    } catch (error) {
+      if (error instanceof ApiClientError) {
+        setFeedback(error.message);
+      } else {
+        setFeedback("Unable to reach authentication server. Check that the backend API is running.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleForgotPassword() {
@@ -142,8 +168,8 @@ export function LoginScreen({ portal }: { portal: LoginPortal }) {
                 <button className="text-sm font-semibold text-blue-700 transition hover:text-blue-900" onClick={handleForgotPassword} type="button">Forgot password?</button>
               </div>
 
-              <button className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-200" type="submit">
-                Sign In
+              <button className="group flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-950/15 transition hover:-translate-y-0.5 hover:bg-blue-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60" disabled={isSubmitting} type="submit">
+                {isSubmitting ? "Signing in..." : "Sign In"}
                 <svg aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 20 20"><path d="M4.167 10h11.666m0 0-5-5m5 5-5 5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" /></svg>
               </button>
             </form>
@@ -159,7 +185,7 @@ export function LoginScreen({ portal }: { portal: LoginPortal }) {
                   Return to website
                 </Link>
               </div>
-              <p className="text-[11px] text-slate-400">Frontend demonstration only · Authentication is not connected</p>
+              <p className="text-[11px] text-slate-400">Connected to backend authentication · Use demo workspace link if offline</p>
             </div>
           </div>
         </section>

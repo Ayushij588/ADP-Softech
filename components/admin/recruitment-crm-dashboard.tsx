@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -19,16 +19,24 @@ import {
   RecruitmentDashboardFilters,
   type RecruitmentDashboardFilterValues,
 } from "@/components/admin/recruitment-dashboard-filters";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  applicationManagementRecords,
-  candidateManagementRecords,
-  jobManagementRecords,
-} from "@/constants/admin-content";
+import { useAsyncData } from "@/hooks/use-async-data";
+import { useAuth } from "@/hooks/use-auth";
+import { getApplications } from "@/services/applications.service";
+import { getClients } from "@/services/clients.service";
+import { getDashboard } from "@/services/dashboard.service";
+import { getJobs } from "@/services/jobs.service";
+import { getRecruiters } from "@/services/users.service";
+import type {
+  ApiApplication,
+  ApiClient,
+  ApiDashboardData,
+  ApiJob,
+  ApiUser,
+} from "@/types/api";
 
-const referenceDateMs = new Date("2026-11-27T00:00:00Z").getTime();
-
-const trendDays = ["Thu", "Fri", "Sat", "Sun", "Mon", "Tue", "Wed"];
+const trendDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const matchBands = [
   { name: "Strong match (85–100%)", color: "var(--brand-primary)", matches: (score: number) => score >= 85 },
   { name: "Good match (70–84%)", color: "var(--brand-primary-soft)", matches: (score: number) => score >= 70 && score < 85 },
@@ -37,15 +45,14 @@ const matchBands = [
 ];
 
 const initialTasks = [
-  { id: 1, title: "Follow up on Northstar client submission", detail: "APP-2088 · Aarav Mehta · Senior Software Engineer", due: "Today", done: false },
-  { id: 2, title: "Prepare Portfolio Walkthrough feedback", detail: "APP-2087 · Mira Shah · Product Designer", due: "Today", done: false },
-  { id: 3, title: "Review scanned PDF manual fallback", detail: "APP-2083 · Diya Kapoor · ATS Failed", due: "Tomorrow", done: false },
+  { id: 1, title: "Follow up on client submissions", detail: "Review candidates in Submitted to Client stage", due: "Today", done: false },
+  { id: 2, title: "Confirm scheduled interview panels", detail: "Check upcoming Interview Scheduled records", due: "Today", done: false },
+  { id: 3, title: "Review new incoming applications", detail: "Triage New Application queue by JD", due: "Tomorrow", done: false },
 ];
 
 const initialNotifications = [
-  { id: 1, title: "Client submission logged", detail: "Aarav Mehta (Resume v2) submitted to Northstar Technologies", time: "12 min ago", unread: true, color: "bg-blue-600" },
-  { id: 2, title: "Interview scheduled", detail: "Mira Shah · Product Designer · 28 Nov, 2:30 PM", time: "1 hour ago", unread: true, color: "bg-sky-500" },
-  { id: 3, title: "ATS manual review flagged", detail: "APP-2083 (Diya Kapoor) needs manual review due to scanned PDF", time: "3 hours ago", unread: false, color: "bg-indigo-500" },
+  { id: 1, title: "Dashboard connected", detail: "Live metrics synced with /api/dashboard", time: "Just now", unread: true, color: "bg-blue-600" },
+  { id: 2, title: "Pipeline tracking active", detail: "Status updates and notes sync to MongoDB", time: "Active", unread: false, color: "bg-sky-500" },
 ];
 
 const chartTooltipStyle = {
@@ -55,24 +62,43 @@ const chartTooltipStyle = {
   fontSize: "12px",
 };
 
-function getDaysAgo(isoDate: string) {
-  const diff = referenceDateMs - new Date(`${isoDate}T00:00:00Z`).getTime();
-  return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24)));
-}
+const statusLabels: Record<string, string> = {
+  new_application: "New Application",
+  resume_under_review: "Resume Under Review",
+  shortlisted: "Shortlisted",
+  technical_screening: "Technical Screening",
+  interview_scheduled: "Interview Scheduled",
+  selected: "Selected",
+  rejected: "Rejected",
+  on_hold: "On Hold",
+  submitted_to_client: "Submitted to Client",
+  client_approved: "Client Approved",
+  client_rejected: "Client Rejected",
+  hired: "Hired / Joined",
+};
 
-function getWeekdayLabel(isoDate: string) {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
-    weekday: "short",
-    timeZone: "UTC",
-  });
+function getDateRangeBounds(range: RecruitmentDashboardFilterValues["dateRange"]) {
+  const daysMap: Record<RecruitmentDashboardFilterValues["dateRange"], number> = {
+    Today: 1,
+    "Last 7 days": 7,
+    "Last 30 days": 30,
+    "This quarter": 90,
+  };
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - daysMap[range]);
+  return {
+    startDate: start.toISOString().slice(0, 10),
+    endDate: end.toISOString().slice(0, 10),
+  };
 }
 
 function getStatusTone(status: string) {
-  if (["Selected", "Hired / Joined", "Client Approved"].includes(status)) return "success" as const;
-  if (["Shortlisted", "Interview Scheduled", "Submitted to Client", "Technical Screening"].includes(status)) return "info" as const;
-  if (status === "On Hold") return "hold" as const;
-  if (["Rejected", "Client Rejected"].includes(status)) return "danger" as const;
-  if (status === "Resume Under Review") return "warning" as const;
+  if (["selected", "hired", "client_approved"].includes(status)) return "success" as const;
+  if (["shortlisted", "interview_scheduled", "submitted_to_client", "technical_screening"].includes(status)) return "info" as const;
+  if (status === "on_hold") return "hold" as const;
+  if (["rejected", "client_rejected"].includes(status)) return "danger" as const;
+  if (status === "resume_under_review") return "warning" as const;
   return "neutral" as const;
 }
 
@@ -88,87 +114,120 @@ function SectionHeading({ title, detail, href, action }: { title: string; detail
   );
 }
 
+type DashboardBundle = {
+  dashboard: ApiDashboardData;
+  applications: ApiApplication[];
+  jobs: ApiJob[];
+  recruiters: ApiUser[];
+  clients: ApiClient[];
+};
+
 export function RecruitmentCrmDashboard() {
+  const { user, isAuthenticated } = useAuth("admin");
+  const isSuperAdmin = user?.role === "super_admin";
   const [tasks, setTasks] = useState(initialTasks);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [filters, setFilters] = useState(defaultRecruitmentDashboardFilters);
-  const unreadCount = notifications.filter((item) => item.unread).length;
 
-  const dateRangeDays: Record<RecruitmentDashboardFilterValues["dateRange"], number> = {
-    Today: 2,
-    "Last 7 days": 7,
-    "Last 30 days": 30,
-    "This quarter": 90,
-  };
+  const fetcher = useCallback(async (): Promise<DashboardBundle> => {
+    const bounds = getDateRangeBounds(filters.dateRange);
+    const [dashboard, applications, jobs, recruiters, clients] = await Promise.all([
+      getDashboard({
+        startDate: bounds.startDate,
+        endDate: bounds.endDate,
+        recruiterId: isSuperAdmin ? filters.recruiterId || undefined : undefined,
+        clientId: isSuperAdmin ? filters.clientId || undefined : undefined,
+        jobId: filters.jobId || undefined,
+      }),
+      getApplications(),
+      getJobs(),
+      isSuperAdmin ? getRecruiters().catch(() => []) : Promise.resolve([]),
+      isSuperAdmin ? getClients().catch(() => []) : Promise.resolve([]),
+    ]);
+    return { dashboard, applications, jobs, recruiters, clients };
+  }, [filters, isSuperAdmin]);
 
-  const filteredApplications = applicationManagementRecords.filter((application) =>
-    getDaysAgo(application.applicationDateIso) <= dateRangeDays[filters.dateRange] &&
-    (!filters.recruiter || application.recruiterOwner === filters.recruiter) &&
-    (!filters.client || application.clientName === filters.client) &&
-    (!filters.job || application.jobId === filters.job),
+  const { data, isLoading, error, refetch } = useAsyncData<DashboardBundle>(
+    fetcher,
+    isAuthenticated,
   );
 
-  const filteredJobs = jobManagementRecords.filter((job) =>
-    (!filters.recruiter || job.recruiterOwner === filters.recruiter) &&
-    (!filters.client || job.clientName === filters.client) &&
-    (!filters.job || job.jobId === filters.job),
-  );
+  const dashboard = data?.dashboard;
+  const applications = useMemo(() => data?.applications ?? [], [data?.applications]);
+  const jobs = useMemo(() => data?.jobs ?? [], [data?.jobs]);
 
-  const activeJobRecords = filteredJobs.filter((job) =>
-    ["Published", "Active"].includes(job.status),
+  const jobOptions = useMemo(
+    () => jobs.map((job) => ({ id: job._id, label: `${job.jobId} · ${job.jobTitle}` })),
+    [jobs],
   );
-
-  const statusCounts = {
-    shortlisted: filteredApplications.filter((a) => a.status === "Shortlisted").length,
-    interviews: filteredApplications.filter((a) => ["Interview Scheduled", "Technical Screening"].includes(a.status)).length,
-    submittedToClient: filteredApplications.filter((a) => a.status === "Submitted to Client" || Boolean(a.clientSubmissions?.length)).length,
-    selected: filteredApplications.filter((a) => ["Selected", "Hired / Joined", "Client Approved"].includes(a.status)).length,
-    rejected: filteredApplications.filter((a) => ["Rejected", "Client Rejected"].includes(a.status)).length,
-    onHold: filteredApplications.filter((a) => a.status === "On Hold").length,
-  };
+  const recruiterOptions = useMemo(
+    () =>
+      (data?.recruiters ?? []).map((r) => ({
+        id: r._id ?? r.id ?? "",
+        label: r.name,
+      })),
+    [data?.recruiters],
+  );
+  const clientOptions = useMemo(
+    () =>
+      (data?.clients ?? []).map((c) => ({
+        id: c._id,
+        label: c.companyName,
+      })),
+    [data?.clients],
+  );
 
   const metrics = [
-    { label: "Active JDs", value: activeJobRecords.length, context: "Published or active open jobs", icon: "JD", tone: "bg-blue-50 text-blue-700" },
-    { label: "New Applications", value: filteredApplications.length, context: `Received in ${filters.dateRange.toLowerCase()}`, icon: "AP", tone: "bg-sky-50 text-sky-700" },
-    { label: "Total Candidates", value: filters.recruiter || filters.client || filters.job ? new Set(filteredApplications.map((a) => a.candidateId)).size : candidateManagementRecords.length, context: "Unique candidates matching filters", icon: "CA", tone: "bg-indigo-50 text-indigo-700" },
-    { label: "Shortlisted", value: statusCounts.shortlisted, context: "Ready for client or technical review", icon: "SL", tone: "bg-cyan-50 text-cyan-700" },
-    { label: "Interview Scheduled", value: statusCounts.interviews, context: "Screening & interview stages", icon: "IN", tone: "bg-emerald-50 text-emerald-700" },
-    { label: "Submitted to Client", value: statusCounts.submittedToClient, context: "Shared with hiring clients", icon: "CS", tone: "bg-blue-50 text-blue-700" },
+    { label: "Active JDs", value: dashboard?.activeJDs ?? 0, context: "Published or active open jobs", icon: "JD", tone: "bg-blue-50 text-blue-700" },
+    { label: "Applications", value: dashboard?.newApplications ?? 0, context: `Received in ${filters.dateRange.toLowerCase()}`, icon: "AP", tone: "bg-sky-50 text-sky-700" },
+    { label: "Total Candidates", value: dashboard?.totalCandidates ?? 0, context: "Unique candidates in scope", icon: "CA", tone: "bg-indigo-50 text-indigo-700" },
+    { label: "Shortlisted", value: dashboard?.shortlisted ?? 0, context: "Ready for client or technical review", icon: "SL", tone: "bg-cyan-50 text-cyan-700" },
+    { label: "Interview Scheduled", value: dashboard?.interviewScheduled ?? 0, context: "Interview stages scheduled", icon: "IN", tone: "bg-emerald-50 text-emerald-700" },
+    { label: "Submitted to Client", value: dashboard?.submittedToClient ?? 0, context: "Shared with hiring clients", icon: "CS", tone: "bg-blue-50 text-blue-700" },
   ];
 
-  const applicationTrend = trendDays.map((day) => {
-    const dayApplications = filteredApplications.filter((application) => getWeekdayLabel(application.applicationDateIso) === day);
-    return {
-      day,
-      applications: dayApplications.length,
-      shortlisted: dayApplications.filter((application) => ["Shortlisted", "Submitted to Client", "Interview Scheduled"].includes(application.status)).length,
-    };
-  });
+  const applicationTrend = useMemo(
+    () =>
+      trendDays.map((day) => {
+        const dayApps = applications.filter((app) => {
+          const weekday = new Date(app.appliedAt || app.createdAt).toLocaleDateString("en-US", {
+            weekday: "short",
+          });
+          return weekday === day;
+        });
+        return {
+          day,
+          applications: dayApps.length,
+          shortlisted: dayApps.filter((a) =>
+            ["shortlisted", "submitted_to_client", "interview_scheduled", "selected", "hired"].includes(a.status),
+          ).length,
+        };
+      }),
+    [applications],
+  );
+
+  const scoredApps = useMemo(
+    () => applications.filter((a) => typeof a.atsScore === "number"),
+    [applications],
+  );
 
   const matchDistribution = matchBands.map((band) => {
-    const matchingApplications = filteredApplications.filter((application) =>
-      band.matches(Number.parseInt(application.atsScore, 10)),
-    ).length;
+    const matching = scoredApps.filter((a) => band.matches(a.atsScore ?? 0)).length;
     return {
       name: band.name,
       color: band.color,
-      value: filteredApplications.length
-        ? Math.round((matchingApplications / filteredApplications.length) * 100)
-        : 0,
+      value: scoredApps.length ? Math.round((matching / scoredApps.length) * 100) : 0,
     };
   });
 
-  const averageMatch = filteredApplications.length
-    ? Math.round(
-        filteredApplications.reduce(
-          (total, application) => total + Number.parseInt(application.atsScore, 10),
-          0,
-        ) / filteredApplications.length,
-      )
+  const averageMatch = scoredApps.length
+    ? Math.round(scoredApps.reduce((sum, a) => sum + (a.atsScore ?? 0), 0) / scoredApps.length)
     : 0;
 
+  const unreadCount = notifications.filter((item) => item.unread).length;
+
   function toggleTask(id: number) {
-    setTasks((current) => current.map((task) => task.id === id ? { ...task, done: !task.done } : task));
+    setTasks((current) => current.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
   }
 
   function markNotificationsRead() {
@@ -181,50 +240,78 @@ export function RecruitmentCrmDashboard() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-700">Recruitment workspace</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">Recruitment Admin Dashboard</h1>
-          <p className="mt-2 text-sm text-slate-500">Centralized visibility across JDs, candidate applications, ATS match distribution, and client submissions.</p>
+          <p className="mt-2 text-sm text-slate-500">Live visibility across JDs, candidate applications, and pipeline stages.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-600">27 November 2026</span>
           <Link className="inline-flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800" href="/admin/jobs">
             <span className="text-lg leading-none">+</span> Manage JDs
           </Link>
         </div>
       </header>
 
-      <RecruitmentDashboardFilters onApply={setFilters} />
+      {!isAuthenticated && (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Sign in on <Link className="font-semibold underline" href="/admin/login">/admin/login</Link> to load live metrics from <span className="font-mono text-xs">/api/dashboard</span>.
+        </div>
+      )}
 
-      <section aria-label="Recruitment key performance indicators" className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {metrics.map((metric) => (
-          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" key={metric.label}>
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-xs font-medium text-slate-500">{metric.label}</p>
-              <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${metric.tone}`}>{metric.icon}</span>
+      {error && (
+        <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+          <span>{error}</span>
+          <button className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100" onClick={() => void refetch()} type="button">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <RecruitmentDashboardFilters
+        clientOptions={clientOptions}
+        jobOptions={jobOptions}
+        onApply={setFilters}
+        recruiterOptions={recruiterOptions}
+        showSuperAdminFilters={isSuperAdmin}
+      />
+
+      {isLoading ? (
+        <div className="mt-8 flex min-h-40 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+          <LoadingSpinner label="Loading live dashboard metrics..." />
+        </div>
+      ) : (
+        <>
+          <section aria-label="Recruitment key performance indicators" className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {metrics.map((metric) => (
+              <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" key={metric.label}>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-medium text-slate-500">{metric.label}</p>
+                  <span className={`inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-[10px] font-bold ${metric.tone}`}>{metric.icon}</span>
+                </div>
+                <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{metric.value.toLocaleString()}</p>
+                <p className="mt-1 text-xs text-slate-500">{metric.context}</p>
+              </article>
+            ))}
+          </section>
+
+          <section aria-label="Selected, rejected, and on hold breakdown" className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Selected / Hired</span>
+              <span className="text-lg font-bold tabular-nums text-emerald-950">{dashboard?.selected ?? 0}</span>
             </div>
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{metric.value.toLocaleString()}</p>
-            <p className="mt-1 text-xs text-slate-500">{metric.context}</p>
-          </article>
-        ))}
-      </section>
-
-      <section aria-label="Selected, rejected, and on hold breakdown" className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Selected / Hired</span>
-          <span className="text-lg font-bold tabular-nums text-emerald-950">{statusCounts.selected}</span>
-        </div>
-        <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50/70 px-4 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-orange-800">On Hold</span>
-          <span className="text-lg font-bold tabular-nums text-orange-950">{statusCounts.onHold}</span>
-        </div>
-        <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3">
-          <span className="text-xs font-semibold uppercase tracking-wide text-rose-800">Rejected</span>
-          <span className="text-lg font-bold tabular-nums text-rose-950">{statusCounts.rejected}</span>
-        </div>
-      </section>
+            <div className="flex items-center justify-between rounded-xl border border-orange-200 bg-orange-50/70 px-4 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-orange-800">On Hold</span>
+              <span className="text-lg font-bold tabular-nums text-orange-950">{dashboard?.onHold ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-rose-800">Rejected</span>
+              <span className="text-lg font-bold tabular-nums text-rose-950">{dashboard?.rejected ?? 0}</span>
+            </div>
+          </section>
+        </>
+      )}
 
       <section className="mt-6 grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(19rem,0.9fr)]">
         <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <SectionHeading title="Applications trend" detail="Applications received and shortlisted/progressed by day" />
+            <SectionHeading title="Applications trend" detail="Applications received and progressed by weekday" />
             <span className="rounded-md bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600">{filters.dateRange}</span>
           </div>
           <div className="mt-5 h-64 w-full">
@@ -243,14 +330,10 @@ export function RecruitmentCrmDashboard() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-3 flex gap-5 border-t border-slate-100 pt-4 text-xs text-slate-500">
-            <span className="inline-flex items-center gap-2"><i className="size-2 rounded-full bg-blue-600" />Applications</span>
-            <span className="inline-flex items-center gap-2"><i className="size-2 rounded-full bg-sky-400" />Progressed</span>
-          </div>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <SectionHeading title="ATS match distribution" detail="Configurable score bands across filtered applications" href="/admin/ats" action="View reports" />
+          <SectionHeading title="ATS match distribution" detail="Score bands across evaluated applications" href="/admin/ats" action="View reports" />
           <div className="relative mt-1 h-52">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -283,53 +366,60 @@ export function RecruitmentCrmDashboard() {
             <table className="w-full min-w-[680px] text-left text-sm">
               <thead><tr className="border-b border-slate-100 text-[11px] uppercase tracking-wide text-slate-400"><th className="pb-3 pr-4 font-medium">Candidate</th><th className="pb-3 pr-4 font-medium">Job ID & Role</th><th className="pb-3 pr-4 font-medium">ATS match</th><th className="pb-3 pr-4 font-medium">Status</th><th className="pb-3 font-medium">Received</th></tr></thead>
               <tbody>
-                {filteredApplications.length ? filteredApplications.slice(0, 6).map((application) => (
-                  <tr className="border-b border-slate-50 last:border-0" key={application.id}>
-                    <td className="py-3.5 pr-4">
-                      <Link className="font-semibold text-blue-700 hover:text-blue-900" href={`/admin/applications/${application.id}`}>
-                        {application.candidateName}
-                      </Link>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{application.id} · Resume {application.resumeVersion}</p>
-                    </td>
-                    <td className="py-3.5 pr-4">
-                      <p className="font-medium text-slate-800">{application.jobTitle}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{application.jobId} · JD {application.jdVersion}</p>
-                    </td>
-                    <td className="py-3.5 pr-4 font-semibold tabular-nums text-slate-800">{application.atsScore}</td>
-                    <td className="py-3.5 pr-4"><StatusBadge label={application.status} tone={getStatusTone(application.status)} /></td>
-                    <td className="whitespace-nowrap py-3.5 text-xs text-slate-500">{application.submissionDate}</td>
-                  </tr>
-                )) : <tr><td className="py-8 text-center text-sm text-slate-500" colSpan={5}>No applications match these filters.</td></tr>}
+                {applications.length ? applications.slice(0, 6).map((application) => {
+                  const candidateObj = typeof application.candidate === "object" ? application.candidate : null;
+                  const jobObj = typeof application.job === "object" ? application.job : null;
+                  const candidateName = candidateObj?.fullName ?? candidateObj?.name ?? "Candidate";
+                  return (
+                    <tr className="border-b border-slate-50 last:border-0" key={application._id}>
+                      <td className="py-3.5 pr-4">
+                        <Link className="font-semibold text-blue-700 hover:text-blue-900" href={`/admin/applications/${application._id}`}>
+                          {candidateName}
+                        </Link>
+                        <p className="mt-0.5 text-[11px] text-slate-400">{application.applicationId}</p>
+                      </td>
+                      <td className="py-3.5 pr-4">
+                        <p className="font-medium text-slate-800">{jobObj?.jobTitle ?? "Job"}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-400">{jobObj?.jobId ?? "—"}</p>
+                      </td>
+                      <td className="py-3.5 pr-4 font-semibold tabular-nums text-slate-800">
+                        {typeof application.atsScore === "number" ? `${application.atsScore}%` : "Pending"}
+                      </td>
+                      <td className="py-3.5 pr-4"><StatusBadge label={statusLabels[application.status] ?? application.status} tone={getStatusTone(application.status)} /></td>
+                      <td className="whitespace-nowrap py-3.5 text-xs text-slate-500">
+                        {new Date(application.appliedAt || application.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr><td className="py-8 text-center text-sm text-slate-500" colSpan={5}>No applications loaded yet.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <SectionHeading title="Applications by JD" detail="Open roles grouped by Job ID" href="/admin/jobs" action="Manage jobs" />
+          <SectionHeading title="Applications by JD" detail="Application counts grouped by Job ID" href="/admin/jobs" action="Manage jobs" />
           <div className="mt-5 space-y-4">
-            {filteredJobs.length ? filteredJobs.slice(0, 4).map((job) => {
-              const appCount = applicationManagementRecords.filter((app) => app.jobId === job.jobId).length;
-              const progress = Math.min(100, Math.max(18, appCount * 28));
+            {dashboard?.applicationsByJD?.length ? dashboard.applicationsByJD.slice(0, 5).map((item) => {
+              const progress = Math.min(100, Math.max(15, item.applicationCount * 20));
               return (
-                <div key={job.id}>
+                <div key={item.jobId}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <Link className="block truncate text-sm font-semibold text-slate-900 hover:text-blue-700" href={`/admin/jobs/${job.id}`}>
-                        {job.title}
-                      </Link>
-                      <p className="mt-0.5 text-[11px] text-slate-400">{job.jobId} · {job.recruiterOwner} · {job.status}</p>
+                      <p className="truncate text-sm font-semibold text-slate-900">{item.jobTitle}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-400">{item.jobId}</p>
                     </div>
-                    <span className="shrink-0 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">{job.metric}</span>
+                    <span className="shrink-0 rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+                      {item.applicationCount} {item.applicationCount === 1 ? "applicant" : "applicants"}
+                    </span>
                   </div>
                   <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${progress}%` }} /></div>
                 </div>
               );
-            }) : <p className="py-8 text-center text-sm text-slate-500">No jobs match these filters.</p>}
+            }) : <p className="py-8 text-center text-sm text-slate-500">No JD application counts available.</p>}
           </div>
-          <Link className="mt-5 inline-flex w-full justify-center rounded-lg border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50" href="/admin/jobs">
-            View {filteredJobs.length} matching {filteredJobs.length === 1 ? "JD" : "JDs"}
-          </Link>
         </article>
       </section>
 
@@ -362,17 +452,6 @@ export function RecruitmentCrmDashboard() {
           </ul>
         </article>
       </section>
-
-      <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <SectionHeading title="Quick actions" detail="Shortcuts to common recruitment tasks" />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Link className="group flex items-center gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-blue-200 hover:bg-blue-50/50" href="/admin/jobs"><span className="inline-flex size-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">+</span><span><span className="block text-sm font-semibold text-slate-800">Create a JD</span><span className="mt-0.5 block text-xs text-slate-500">Add or upload a client JD</span></span></Link>
-          <Link className="group flex items-center gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-blue-200 hover:bg-blue-50/50" href="/admin/applications"><span className="inline-flex size-9 items-center justify-center rounded-lg bg-sky-50 text-sm font-bold text-sky-700">↗</span><span><span className="block text-sm font-semibold text-slate-800">Review applications</span><span className="mt-0.5 block text-xs text-slate-500">Triage JD-linked applicants</span></span></Link>
-          <Link className="group flex items-center gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-blue-200 hover:bg-blue-50/50" href="/admin/candidates"><span className="inline-flex size-9 items-center justify-center rounded-lg bg-indigo-50 text-xs font-bold text-indigo-700">ID</span><span><span className="block text-sm font-semibold text-slate-800">Search candidates</span><span className="mt-0.5 block text-xs text-slate-500">Name, email, phone, skills</span></span></Link>
-          <Link className="group flex items-center gap-3 rounded-lg border border-slate-200 p-3.5 transition hover:border-blue-200 hover:bg-blue-50/50" href="/admin/reports"><span className="inline-flex size-9 items-center justify-center rounded-lg bg-cyan-50 text-xs font-bold text-cyan-700">▤</span><span><span className="block text-sm font-semibold text-slate-800">View reports</span><span className="mt-0.5 block text-xs text-slate-500">Track hiring performance</span></span></Link>
-        </div>
-      </section>
-      <p className="mt-5 text-center text-[11px] text-slate-400">Recruitment insights shown are illustrative sample data for frontend demonstration.</p>
     </main>
   );
 }

@@ -2,14 +2,28 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { FieldError } from "@/components/ui/field-error";
 import { FormDialog } from "@/components/ui/form-dialog";
-import {
-  userCreationSchema,
-  userRoles,
-  userStatuses,
-  type UserCreationValues,
-} from "@/lib/admin-form-schemas";
+
+const createSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
+  email: z.string().trim().email("Enter a valid email address."),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters.")
+    .regex(/[A-Z]/, "Must include an uppercase letter.")
+    .regex(/[a-z]/, "Must include a lowercase letter.")
+    .regex(/[0-9]/, "Must include a number."),
+});
+
+const editSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters.").max(100),
+  email: z.string().trim().email("Enter a valid email address."),
+  password: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof editSchema>;
 
 const fieldClassName =
   "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
@@ -19,24 +33,22 @@ export function UserCreationDialog({
   onClose,
   onSave,
 }: {
-  user?: UserCreationValues & { id: string };
+  user?: { id: string; name: string; email: string };
   onClose: () => void;
-  onSave: (values: UserCreationValues) => void;
+  onSave: (values: FormValues) => Promise<void> | void;
 }) {
   const isEdit = Boolean(user);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<UserCreationValues>({
-    resolver: zodResolver(userCreationSchema),
+  } = useForm<FormValues>({
+    resolver: zodResolver(isEdit ? editSchema : createSchema),
     mode: "onBlur",
     defaultValues: {
       name: user?.name ?? "",
       email: user?.email ?? "",
-      role: user?.role ?? "Recruitment Admin",
-      assignedTeam: user?.assignedTeam ?? "Engineering & Offshore",
-      status: user?.status ?? "Invited",
+      password: "",
     },
   });
 
@@ -44,11 +56,11 @@ export function UserCreationDialog({
     <FormDialog
       description={
         isEdit
-          ? "Update account role, team assignment, or status in the local demo list."
-          : "User details are validated locally and are not sent as an invitation."
+          ? "Update recruiter name or work email via /api/users/recruiters."
+          : "Create a recruiter account via /api/auth/create-recruiter."
       }
       onClose={onClose}
-      title={isEdit ? `Edit ${user?.name}` : "Create user"}
+      title={isEdit ? `Edit ${user?.name}` : "Create recruiter"}
     >
       <form
         className="space-y-4 px-5 py-6 sm:px-7"
@@ -63,7 +75,7 @@ export function UserCreationDialog({
             aria-invalid={Boolean(errors.name)}
             autoComplete="name"
             className={fieldClassName}
-            placeholder="e.g. Taylor Morgan"
+            placeholder="e.g. Aisha Patel"
           />
           <FieldError id="user-name-error" message={errors.name?.message} />
         </label>
@@ -76,64 +88,32 @@ export function UserCreationDialog({
             aria-invalid={Boolean(errors.email)}
             autoComplete="email"
             className={fieldClassName}
-            placeholder="name@adpsoftech.example"
+            placeholder="recruiter@adpsoftech.com"
             type="email"
           />
           <FieldError id="user-email-error" message={errors.email?.message} />
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {!isEdit && (
           <label className="block text-sm font-medium text-slate-700">
-            Role
-            <select
-              {...register("role")}
-              aria-describedby={errors.role ? "user-role-error" : undefined}
-              aria-invalid={Boolean(errors.role)}
+            Initial password
+            <input
+              {...register("password")}
+              aria-describedby={
+                errors.password ? "user-password-error" : undefined
+              }
+              aria-invalid={Boolean(errors.password)}
+              autoComplete="new-password"
               className={fieldClassName}
-            >
-              {userRoles.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-            <FieldError id="user-role-error" message={errors.role?.message} />
+              placeholder="Min 8 chars (A-Z, a-z, 0-9)"
+              type="password"
+            />
+            <FieldError
+              id="user-password-error"
+              message={errors.password?.message}
+            />
           </label>
-
-          <label className="block text-sm font-medium text-slate-700">
-            Account status
-            <select
-              {...register("status")}
-              aria-describedby={errors.status ? "user-status-error" : undefined}
-              aria-invalid={Boolean(errors.status)}
-              className={fieldClassName}
-            >
-              {userStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-            <FieldError id="user-status-error" message={errors.status?.message} />
-          </label>
-        </div>
-
-        <label className="block text-sm font-medium text-slate-700">
-          Assigned team / scope
-          <input
-            {...register("assignedTeam")}
-            aria-describedby={
-              errors.assignedTeam ? "user-team-error" : undefined
-            }
-            aria-invalid={Boolean(errors.assignedTeam)}
-            className={fieldClassName}
-            placeholder="e.g. Engineering & Offshore"
-          />
-          <FieldError
-            id="user-team-error"
-            message={errors.assignedTeam?.message}
-          />
-        </label>
+        )}
 
         <div className="flex flex-col-reverse justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row">
           <button
@@ -148,7 +128,11 @@ export function UserCreationDialog({
             disabled={isSubmitting}
             type="submit"
           >
-            {isEdit ? "Save changes" : "Create user"}
+            {isSubmitting
+              ? "Saving..."
+              : isEdit
+                ? "Save changes"
+                : "Create recruiter"}
           </button>
         </div>
       </form>
