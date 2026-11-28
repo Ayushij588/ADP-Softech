@@ -4,10 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { openPositions } from "@/constants/public-content";
+import { getJobById, isValidJobId, openPositions } from "@/constants/public-content";
 
 const maxResumeSize = 10 * 1024 * 1024; // 10 MB limit per DOCX
 const allowedResumeExtension = /\.(pdf|doc|docx)$/i;
@@ -146,6 +145,8 @@ export function ResumeSubmissionForm() {
   const searchParams = useSearchParams();
   const selectedJobId = searchParams.get("jobId") ?? "";
   const selectedJobTitle = searchParams.get("jobTitle") ?? "";
+  const [enteredJobId, setEnteredJobId] = useState(selectedJobId);
+  const matchedJob = enteredJobId.trim() ? getJobById(enteredJobId) : undefined;
   const [validationMessage, setValidationMessage] = useState("");
   const [submittedApplication, setSubmittedApplication] = useState<null | {
     applicationId: string;
@@ -156,6 +157,7 @@ export function ResumeSubmissionForm() {
     register,
     handleSubmit,
     getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ResumeSubmissionValues>({
     resolver: zodResolver(resumeSubmissionSchema),
@@ -209,7 +211,7 @@ export function ResumeSubmissionForm() {
     <form
       className="space-y-6"
       noValidate
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onValidForm)}
     >
       <div>
         <h2 className="text-xl sm:text-2xl font-bold text-[#152B38]">
@@ -268,12 +270,12 @@ export function ResumeSubmissionForm() {
                 key={j.id}
                 type="button"
                 onClick={() => {
-                  setValue("jobId", j.id, { shouldValidate: true });
-                  setEnteredJobId(j.id);
+                  setValue("jobId", j.jobId, { shouldValidate: true });
+                  setEnteredJobId(j.jobId);
                 }}
                 className="font-mono font-bold text-[#07394B] underline mx-1"
               >
-                {j.id}{i < 2 ? "," : ""}
+                {j.jobId}{i < 2 ? "," : ""}
               </button>
             ))}
           </p>

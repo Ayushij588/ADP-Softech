@@ -7,7 +7,7 @@ export type PublicJob = {
   employmentType: string;
   workMode: string;
   experience: string;
-  skills: readonly string[];
+  experienceRange: string;
   deadline: string;
   status: "Published" | "Closed";
   summary: string;
@@ -187,7 +187,7 @@ export const openPositions: readonly PublicJob[] = [
     employmentType: "Full-time",
     workMode: "Hybrid",
     experience: "5-8 years",
-    skills: ["React", "TypeScript", "Node.js"],
+    experienceRange: "5-8 years",
     deadline: "15 Dec 2026",
     status: "Published",
     summary:
@@ -222,7 +222,7 @@ export const openPositions: readonly PublicJob[] = [
     employmentType: "Full-time",
     workMode: "On-site",
     experience: "3-6 years",
-    skills: ["Recruitment", "Sourcing", "HR"],
+    experienceRange: "3-6 years",
     deadline: "12 Dec 2026",
     status: "Published",
     summary:
@@ -257,7 +257,7 @@ export const openPositions: readonly PublicJob[] = [
     employmentType: "Full-time",
     workMode: "Hybrid",
     experience: "6-10 years",
-    skills: ["Sales", "Partnerships", "SaaS"],
+    experienceRange: "6-10 years",
     deadline: "20 Dec 2026",
     status: "Published",
     summary:
@@ -294,6 +294,7 @@ export function getJobById(jobId: string): PublicJob | undefined {
   return openPositions.find(
     (job) =>
       job.id.toLowerCase() === normalized ||
+      job.jobId.toLowerCase() === normalized ||
       job.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") === normalized
   );
 }

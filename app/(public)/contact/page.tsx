@@ -1,16 +1,6 @@
-import Link from "next/link";
 import { ContactInquiryForm } from "@/components/public/contact-inquiry-form";
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", subject: "", message: "" });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
-    setSubmitted(true);
-  };
-
   return (
     <main className="bg-[#F1F8FB] min-h-screen">
       {/* Header Banner */}
@@ -40,15 +30,34 @@ export default function ContactPage() {
               <h2 className="mt-2 text-xl font-bold text-[#152B38]">
                 Official Contact Points
               </h2>
+              <div className="mt-5 space-y-3 text-sm text-[#4F6A78]">
+                <p>
+                  Email:{" "}
+                  <a href="mailto:info@adpsoftech.com" className="font-semibold text-[#07394B] underline">
+                    info@adpsoftech.com
+                  </a>
+                </p>
+                <p>
+                  Phone:{" "}
+                  <a href="tel:+919876543210" className="font-semibold text-[#07394B] underline">
+                    +91 98765 43210
+                  </a>
+                </p>
+                <p>Locations: India | Global Delivery</p>
+              </div>
+            </div>
+          </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-          <h2 className="text-xl font-semibold text-slate-950">
-            Send an enquiry
-          </h2>
-          <p className="mt-2 text-sm text-slate-600">
-            This sample form is not connected to a submission service.
-          </p>
-          <ContactInquiryForm />
+          {/* Right Column: Contact Form */}
+          <div className="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <h2 className="text-xl font-semibold text-slate-950">
+              Send an enquiry
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              This sample form is not connected to a submission service.
+            </p>
+            <ContactInquiryForm />
+          </div>
         </div>
       </section>
     </main>

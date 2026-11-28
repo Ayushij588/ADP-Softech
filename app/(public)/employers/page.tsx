@@ -1,6 +1,5 @@
 import { EmployerInquiryForm } from "@/components/public/employer-inquiry-form";
 import { recruitmentServices } from "@/constants/public-content";
-import { EmployerInquiryForm } from "@/components/public/employer-inquiry-form";
 
 export default function EmployersPage() {
   return (
@@ -90,15 +89,18 @@ export default function EmployersPage() {
             </h2>
           </div>
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-10 lg:grid-cols-[0.35fr_0.65fr]">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-700">Hiring requirements</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Tell us who you need</h2>
-            <p className="mt-4 leading-7 text-slate-600">Share the role, team and working model so our recruitment team can start with the right context.</p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            <EmployerInquiryForm />
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {recruitmentServices.slice(0, 4).map((service) => (
+              <div
+                key={service.id}
+                className="rounded-2xl border border-[#DCE8ED] bg-[#F1F8FB]/60 p-6"
+              >
+                <h3 className="text-base font-bold text-[#152B38]">{service.name}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#4F6A78]">
+                  {service.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
