@@ -29,7 +29,7 @@ export function Navbar({
         </Link>
         <nav
           aria-label={ariaLabel}
-          className="hidden items-center gap-x-7 text-sm font-medium text-slate-600 md:flex"
+          className="hidden items-center gap-x-7 text-sm font-medium text-slate-600 lg:flex"
         >
           {links.map((item) => (
             <Link

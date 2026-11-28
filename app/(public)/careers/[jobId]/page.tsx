@@ -64,6 +64,9 @@ async function CareerDetailsContent({ params }: CareerDetailsPageProps) {
           <p className="mt-4 text-xs sm:text-sm text-[#DCEFF5]/90">
             {job.location} • {job.workMode} • {job.employmentType} • Experience: {job.experienceRange}
           </p>
+          <p className="mt-3 text-sm text-blue-200">
+            Job ID: {job.jobId} · {job.experience} experience · Applications close {job.deadline}
+          </p>
         </div>
       </section>
 
@@ -122,53 +125,23 @@ async function CareerDetailsContent({ params }: CareerDetailsPageProps) {
             </div>
           </section>
         </article>
-
-        {/* Aside Application Card */}
-        <aside className="space-y-6">
-          <div className="h-fit rounded-3xl border border-[#DCE8ED] bg-white p-6 sm:p-7 shadow-sm">
-            <span className="rounded-full bg-[#DCEFF5] px-2.5 py-0.5 text-[11px] font-bold text-[#07394B]">
-              Job ID: {job.id}
-            </span>
-            <h3 className="mt-4 text-lg font-bold text-[#152B38]">
-              Ready to Apply?
-            </h3>
-            <p className="mt-2 text-xs sm:text-sm text-[#4F6A78] leading-relaxed">
-              Submit your resume directly against this Job ID. No login or registration required.
-            </p>
-
-            <Link
-              href={`/submit-resume?jobId=${job.id}`}
-              className="mt-6 flex w-full items-center justify-center rounded-full bg-[oklch(39.8%_0.07_227.392)] px-5 py-3 text-sm font-semibold text-white shadow-xs transition hover:bg-[#07394B]"
-            >
-              Apply for this Position →
-            </Link>
-
-            <div className="mt-6 border-t border-[#DCE8ED] pt-4 space-y-2 text-xs text-[#4F6A78]">
-              <div className="flex justify-between">
-                <span className="font-semibold">Department:</span>
-                <span>{job.department}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Location:</span>
-                <span>{job.location}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Work Mode:</span>
-                <span>{job.workMode}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Experience:</span>
-                <span>{job.experienceRange}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 leading-relaxed">
-            <p className="font-bold">Recruiter Review Policy:</p>
-            <p className="mt-1">
-              Applications are reviewed by recruitment managers. Candidate profiles are held in strict confidence and shared with clients only upon verified match and consent.
-            </p>
-          </div>
+        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-semibold text-slate-950">
+            Interested in this role?
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Share your resume and our recruitment team can learn more about
+            your experience.
+          </p>
+          <Link
+            className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-blue-700 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-800"
+            href={`/submit-resume?jobId=${encodeURIComponent(job.jobId)}&jobTitle=${encodeURIComponent(job.title)}`}
+          >
+            Submit your resume
+          </Link>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            This is a sample listing for demonstration.
+          </p>
         </aside>
       </div>
     </main>

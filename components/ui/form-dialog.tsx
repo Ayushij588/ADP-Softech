@@ -7,6 +7,7 @@ type FormDialogProps = {
   description: string;
   onClose: () => void;
   children: ReactNode;
+  maxWidthClassName?: string;
 };
 
 export function FormDialog({
@@ -14,6 +15,7 @@ export function FormDialog({
   description,
   onClose,
   children,
+  maxWidthClassName = "max-w-xl",
 }: FormDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -28,7 +30,7 @@ export function FormDialog({
     <dialog
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
-      className="m-auto max-h-[90vh] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-2xl bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-slate-950/50"
+      className={`m-auto max-h-[90vh] w-[calc(100%-2rem)] ${maxWidthClassName} overflow-y-auto rounded-2xl bg-white p-0 text-slate-950 shadow-2xl backdrop:bg-slate-950/50`}
       onClose={onClose}
       ref={dialogRef}
     >

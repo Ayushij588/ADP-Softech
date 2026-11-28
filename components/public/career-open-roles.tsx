@@ -25,6 +25,8 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
   const [location, setLocation] = useState("");
   const [department, setDepartment] = useState("");
   const [employmentType, setEmploymentType] = useState("");
+  const [workMode, setWorkMode] = useState("");
+  const [experience, setExperience] = useState("");
 
   const locations = useMemo(
     () => [...new Set(jobs.map((job) => job.location))].sort(),
@@ -34,6 +36,18 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
     () => [...new Set(jobs.map((job) => job.department))].sort(),
     [jobs],
   );
+  const employmentTypes = useMemo(
+    () => [...new Set(jobs.map((job) => job.employmentType))].sort(),
+    [jobs],
+  );
+  const workModes = useMemo(
+    () => [...new Set(jobs.map((job) => job.workMode))].sort(),
+    [jobs],
+  );
+  const experienceRanges = useMemo(
+    () => [...new Set(jobs.map((job) => job.experience))].sort(),
+    [jobs],
+  );
 
   const filteredJobs = useMemo(() => {
     const searchTerm = query.trim().toLowerCase();
@@ -41,8 +55,8 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
     return jobs.filter((job) => {
       const matchesSearch =
         searchTerm.length === 0 ||
-        [job.title, job.id, job.department, job.location, job.summary, ...job.skills].some(
-          (value) => value.toLowerCase().includes(searchTerm),
+        [job.title, job.department, job.location, job.summary, ...job.skills].some((value) =>
+          value.toLowerCase().includes(searchTerm),
         );
 
       const matchesEmploymentType =
@@ -56,19 +70,28 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
         matchesSearch &&
         (!location || job.location === location) &&
         (!department || job.department === department) &&
-        matchesEmploymentType
+        (!employmentType || job.employmentType === employmentType) &&
+        (!workMode || job.workMode === workMode) &&
+        (!experience || job.experience === experience)
       );
     });
-  }, [department, employmentType, jobs, location, query]);
+  }, [department, employmentType, experience, jobs, location, query, workMode]);
 
   const hasActiveFilters =
-    query.trim().length > 0 || location !== "" || department !== "" || employmentType !== "";
+    query.trim().length > 0 ||
+    location !== "" ||
+    department !== "" ||
+    employmentType !== "" ||
+    workMode !== "" ||
+    experience !== "";
 
   function clearFilters() {
     setQuery("");
     setLocation("");
     setDepartment("");
     setEmploymentType("");
+    setWorkMode("");
+    setExperience("");
   }
 
   return (
@@ -161,6 +184,20 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
                   {item}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="career-work-mode-filter">
+            Work mode
+            <select className={selectClasses} id="career-work-mode-filter" onChange={(event) => setWorkMode(event.currentTarget.value)} value={workMode}>
+              <option value="">All work modes</option>
+              {workModes.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          <label className="block text-sm font-medium text-slate-700" htmlFor="career-experience-filter">
+            Experience
+            <select className={selectClasses} id="career-experience-filter" onChange={(event) => setExperience(event.currentTarget.value)} value={experience}>
+              <option value="">All experience ranges</option>
+              {experienceRanges.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
         </div>

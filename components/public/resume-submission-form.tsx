@@ -4,9 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { getJobById, isValidJobId, openPositions } from "@/constants/public-content";
+import { openPositions } from "@/constants/public-content";
 
 const maxResumeSize = 10 * 1024 * 1024; // 10 MB limit per DOCX
 const allowedResumeExtension = /\.(pdf|doc|docx)$/i;
@@ -143,21 +144,24 @@ function generateApplicationId(): string {
 
 export function ResumeSubmissionForm() {
   const searchParams = useSearchParams();
-  const initialJobId = searchParams.get("jobId") || "";
-
-  const [confirmation, setConfirmation] = useState<SubmissionConfirmationData | null>(null);
-  const [enteredJobId, setEnteredJobId] = useState(initialJobId);
-
+  const selectedJobId = searchParams.get("jobId") ?? "";
+  const selectedJobTitle = searchParams.get("jobTitle") ?? "";
+  const [validationMessage, setValidationMessage] = useState("");
+  const [submittedApplication, setSubmittedApplication] = useState<null | {
+    applicationId: string;
+    jobId: string;
+    jobTitle: string;
+  }>(null);
   const {
     register,
     handleSubmit,
-    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ResumeSubmissionValues>({
     resolver: zodResolver(resumeSubmissionSchema),
     mode: "onBlur",
     defaultValues: {
-      jobId: initialJobId,
+      jobId: selectedJobId,
       fullName: "",
       email: "",
       mobileNumber: "",
@@ -168,115 +172,40 @@ export function ResumeSubmissionForm() {
     },
   });
 
-  const matchedJob = enteredJobId ? getJobById(enteredJobId) : undefined;
-
-
-
-  function onSubmit(data: ResumeSubmissionValues) {
-    const now = new Date();
-    const generatedAppId = generateApplicationId();
-    const job = getJobById(data.jobId);
-
-    setConfirmation({
-      applicationId: generatedAppId,
-      jobId: data.jobId,
-      jobTitle: job ? job.title : "Candidate Application",
-      candidateName: data.fullName,
-      submittedAt: now.toLocaleString("en-US", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      }),
+  function onValidForm() {
+    const formValues = getValues();
+    const jobId = formValues.jobId.trim();
+    const matchingJob = openPositions.find((job) => job.jobId === jobId);
+    if (!matchingJob) {
+      setValidationMessage("The Job ID is invalid or the job is unavailable.");
+      return;
+    }
+    if (matchingJob.status !== "Published") {
+      setValidationMessage("This job is closed or unpublished and is not accepting applications.");
+      return;
+    }
+    setSubmittedApplication({
+      applicationId: `ADP-APP-20261126-${String(openPositions.indexOf(matchingJob) + 1).padStart(4, "0")}`,
+      jobId: matchingJob.jobId,
+      jobTitle: matchingJob.title,
     });
-  }
-
-  // Confirmation View upon successful submission
-  if (confirmation) {
-    return (
-      <div className="rounded-3xl border border-[#DCE8ED] bg-white p-8 sm:p-10 shadow-sm text-center">
-        {/* Success Icon */}
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#DCEFF5] text-[oklch(39.8%_0.07_227.392)] shadow-xs">
-          <svg
-            className="h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2.2"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-
-        <h2 className="mt-5 text-2xl sm:text-3xl font-extrabold text-[#152B38]">
-          Application Received Successfully
-        </h2>
-
-        <p className="mt-3 text-sm text-[#4F6A78] max-w-lg mx-auto leading-relaxed">
-          Thank you, <strong className="text-[#152B38]">{confirmation.candidateName}</strong>. Your
-          resume has been safely recorded in ADP Softech’s candidate database.
-        </p>
-
-        {/* Confirmation Metadata Summary Card */}
-        <div className="mt-8 mx-auto max-w-md rounded-2xl border border-[#DCE8ED] bg-[#F1F8FB] p-6 text-left space-y-3">
-          <div className="flex justify-between items-center text-xs border-b border-[#DCE8ED] pb-2.5">
-            <span className="font-semibold text-[#17647B]">Application ID:</span>
-            <span className="font-mono font-bold text-[#07394B] text-sm">
-              {confirmation.applicationId}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center text-xs border-b border-[#DCE8ED] pb-2.5">
-            <span className="font-semibold text-[#17647B]">Job ID:</span>
-            <span className="font-mono font-bold text-[oklch(39.8%_0.07_227.392)]">
-              {confirmation.jobId}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center text-xs border-b border-[#DCE8ED] pb-2.5">
-            <span className="font-semibold text-[#17647B]">Target Position:</span>
-            <span className="font-bold text-[#152B38] text-right">
-              {confirmation.jobTitle}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center text-xs">
-            <span className="font-semibold text-[#17647B]">Date &amp; Time:</span>
-            <span className="text-[#4F6A78]">{confirmation.submittedAt}</span>
-          </div>
-        </div>
-
-        {/* Mandatory Candidate Notice per DOCX Section 6.4 */}
-        <div className="mt-6 mx-auto max-w-md rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 text-left leading-relaxed">
-          <p className="font-bold">Important Notice:</p>
-          <p className="mt-1">
-            This confirmation acknowledges receipt of your application for review by ADP Softech’s
-            recruitment specialists. Application submission does not promise an interview or guarantee
-            selection. If your profile matches client criteria, a recruiter will reach out directly.
-          </p>
-        </div>
-
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
-          <Link
-            href="/careers"
-            className="rounded-full bg-[oklch(39.8%_0.07_227.392)] px-6 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-[#07394B] transition"
-          >
-            Browse Other Openings
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              setConfirmation(null);
-            }}
-            className="rounded-full border border-[#DCE8ED] bg-white px-6 py-2.5 text-xs sm:text-sm font-semibold text-[#152B38] hover:bg-[#F1F8FB] transition"
-          >
-            Submit Another Resume
-          </button>
-        </div>
-      </div>
-    );
+    setValidationMessage("");
   }
 
   return (
+    <>
+    {submittedApplication ? (
+      <section aria-labelledby="application-confirmation-heading" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 sm:p-8">
+        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Application received</p>
+        <h2 className="mt-3 text-2xl font-semibold text-slate-950" id="application-confirmation-heading">Thank you for your submission.</h2>
+        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl bg-white p-4"><dt className="text-xs font-semibold uppercase text-slate-500">Application ID</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.applicationId}</dd></div>
+          <div className="rounded-xl bg-white p-4"><dt className="text-xs font-semibold uppercase text-slate-500">Job ID</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.jobId}</dd></div>
+          <div className="rounded-xl bg-white p-4 sm:col-span-2"><dt className="text-xs font-semibold uppercase text-slate-500">Position</dt><dd className="mt-2 font-semibold text-slate-950">{submittedApplication.jobTitle}</dd></div>
+        </dl>
+        <p className="mt-5 text-sm leading-6 text-slate-700">Your application has been received and is subject to review. This confirmation does not promise an interview or selection.</p>
+      </section>
+    ) : (
     <form
       className="space-y-6"
       noValidate
@@ -286,8 +215,16 @@ export function ResumeSubmissionForm() {
         <h2 className="text-xl sm:text-2xl font-bold text-[#152B38]">
           Candidate Information
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-[#4F6A78]">
-          Apply directly to published openings without an account. Enter or confirm the Job ID below.
+        {selectedJobId && (
+          <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Selected job</p>
+            <p className="mt-1 font-semibold text-slate-950">{selectedJobTitle || "Position details"}</p>
+            <p className="mt-1 text-sm text-slate-600">Job ID: {selectedJobId}</p>
+          </div>
+        )}
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Complete each field below. This form is validated locally and is not
+          connected to a submission service.
         </p>
       </div>
 
@@ -555,5 +492,7 @@ export function ResumeSubmissionForm() {
         </button>
       </div>
     </form>
+    )}
+    </>
   );
 }

@@ -21,10 +21,9 @@ export default function SubmitResumePage() {
         </div>
       </section>
 
-      {/* Main Form Section */}
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:px-8 py-12 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="rounded-3xl border border-[#DCE8ED] bg-white p-6 sm:p-10 shadow-sm">
-          <Suspense fallback={<LoadingSpinner label="Loading application form..." />}>
+      <section className="mx-auto grid max-w-7xl gap-12 px-6 py-14 sm:py-16 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <Suspense fallback={<p className="text-sm text-slate-500">Loading application form...</p>}>
             <ResumeSubmissionForm />
           </Suspense>
         </div>

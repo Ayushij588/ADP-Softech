@@ -38,6 +38,8 @@ export function WebsiteContentFormDialog({
     defaultValues: {
       section: record?.section ?? "",
       path: record?.path ?? "",
+      metaTitle: record?.metaTitle ?? "",
+      metaDescription: record?.metaDescription ?? "",
       content: record?.content ?? "",
       status: record?.status === "Draft" ? "Draft" : "Published",
     },
@@ -45,44 +47,82 @@ export function WebsiteContentFormDialog({
 
   return (
     <FormDialog
-      description="Content is validated locally and only updates this temporary demo list."
+      description="Manage public page copy, SEO metadata, and publishing status in the local demo list."
+      maxWidthClassName="max-w-2xl"
       onClose={onClose}
-      title={record ? "Edit website content" : "Add website content"}
+      title={record ? "Edit website content & SEO" : "Add website content"}
     >
       <form
         className="space-y-4 px-5 py-6 sm:px-7"
         noValidate
         onSubmit={handleSubmit(onSave)}
       >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-medium text-slate-700">
+            Section title
+            <input
+              {...register("section")}
+              aria-describedby={
+                errors.section ? "content-section-error" : undefined
+              }
+              aria-invalid={Boolean(errors.section)}
+              className={fieldClassName}
+              placeholder="e.g. Our approach"
+            />
+            <FieldError
+              id="content-section-error"
+              message={errors.section?.message}
+            />
+          </label>
+
+          <label className="block text-sm font-medium text-slate-700">
+            Page path
+            <input
+              {...register("path")}
+              aria-describedby={errors.path ? "content-path-error" : undefined}
+              aria-invalid={Boolean(errors.path)}
+              className={fieldClassName}
+              placeholder="e.g. /about"
+            />
+            <FieldError
+              id="content-path-error"
+              message={errors.path?.message}
+            />
+          </label>
+        </div>
+
         <label className="block text-sm font-medium text-slate-700">
-          Section title
+          SEO Meta Title
           <input
-            {...register("section")}
+            {...register("metaTitle")}
             aria-describedby={
-              errors.section ? "content-section-error" : undefined
+              errors.metaTitle ? "content-meta-title-error" : undefined
             }
-            aria-invalid={Boolean(errors.section)}
+            aria-invalid={Boolean(errors.metaTitle)}
             className={fieldClassName}
-            placeholder="e.g. Our approach"
+            placeholder="e.g. ADP Softech | Recruitment & Offshore Staffing"
           />
           <FieldError
-            id="content-section-error"
-            message={errors.section?.message}
+            id="content-meta-title-error"
+            message={errors.metaTitle?.message}
           />
         </label>
 
         <label className="block text-sm font-medium text-slate-700">
-          Page path
-          <input
-            {...register("path")}
-            aria-describedby={errors.path ? "content-path-error" : undefined}
-            aria-invalid={Boolean(errors.path)}
-            className={fieldClassName}
-            placeholder="e.g. /about"
+          SEO Meta Description
+          <textarea
+            {...register("metaDescription")}
+            aria-describedby={
+              errors.metaDescription ? "content-meta-desc-error" : undefined
+            }
+            aria-invalid={Boolean(errors.metaDescription)}
+            className={`${fieldClassName} min-h-20 resize-y`}
+            placeholder="Concise search engine description (max 240 characters)..."
+            rows={2}
           />
           <FieldError
-            id="content-path-error"
-            message={errors.path?.message}
+            id="content-meta-desc-error"
+            message={errors.metaDescription?.message}
           />
         </label>
 
@@ -94,9 +134,9 @@ export function WebsiteContentFormDialog({
               errors.content ? "content-body-error" : undefined
             }
             aria-invalid={Boolean(errors.content)}
-            className={`${fieldClassName} min-h-36 resize-y`}
+            className={`${fieldClassName} min-h-32 resize-y`}
             placeholder="Enter sample website copy..."
-            rows={5}
+            rows={4}
           />
           <FieldError
             id="content-body-error"
@@ -139,7 +179,7 @@ export function WebsiteContentFormDialog({
             disabled={isSubmitting}
             type="submit"
           >
-            Save to demo list
+            Save changes
           </button>
         </div>
       </form>

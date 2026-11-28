@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AdminPanelLayout } from "@/components/layouts/admin-panel-layout";
+import { ToastProvider } from "@/components/ui/toast";
 import type { NavigationLink } from "@/components/ui/navigation-link";
 
 const navigation: NavigationLink[] = [
@@ -14,8 +15,10 @@ const navigation: NavigationLink[] = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <AdminPanelLayout navigation={navigation} panelName="Recruitment Admin">
-      {children}
-    </AdminPanelLayout>
+    <ToastProvider>
+      <AdminPanelLayout navigation={navigation} panelName="Recruitment Admin">
+        {children}
+      </AdminPanelLayout>
+    </ToastProvider>
   );
 }

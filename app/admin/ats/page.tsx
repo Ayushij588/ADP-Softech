@@ -1,4 +1,5 @@
 import { AtsMatchDistribution } from "@/components/admin/ats-match-distribution";
+import { AtsReportsManagementView } from "@/components/admin/ats-reports-management-view";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 
@@ -57,6 +58,9 @@ export default function AdminAtsPage() {
           description="Illustrative distribution of candidate match scores across all sample profiles"
           title="Candidate Match Distribution"
         />
+      </div>
+      <div className="mt-8">
+        <AtsReportsManagementView />
       </div>
     </main>
   );

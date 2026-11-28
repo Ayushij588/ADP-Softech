@@ -24,7 +24,12 @@ const columns: DataTableColumn<WebsiteContentRecord>[] = [
     key: "section",
     header: "Section",
     render: (section) => (
-      <span className="font-semibold text-slate-900">{section.section}</span>
+      <div>
+        <span className="font-semibold text-slate-900">{section.section}</span>
+        <p className="mt-0.5 truncate max-w-xs text-[11px] text-slate-500">
+          {section.metaTitle || "No SEO title"}
+        </p>
+      </div>
     ),
   },
   {

@@ -1,11 +1,15 @@
 export type PublicJob = {
-  id: string; // Canonical Job ID e.g. ADP-JD-1001
+  id: string;
+  jobId: string;
   title: string;
   department: string;
   location: string;
   employmentType: string;
-  workMode: "Remote" | "Hybrid" | "On-site";
-  experienceRange: string;
+  workMode: string;
+  experience: string;
+  skills: readonly string[];
+  deadline: string;
+  status: "Published" | "Closed";
   summary: string;
   description: string;
   responsibilities: readonly string[];
@@ -175,13 +179,17 @@ export const recruitmentServices: readonly RecruitmentService[] = [
 
 export const openPositions: readonly PublicJob[] = [
   {
-    id: "ADP-JD-1001",
-    title: "Senior Full-Stack Engineer (React & Node.js)",
+    id: "senior-software-engineer",
+    jobId: "ADP-JD-1001",
+    title: "Senior Software Engineer",
     department: "Technology",
     location: "Bengaluru, India",
     employmentType: "Full-time",
     workMode: "Hybrid",
-    experienceRange: "5 - 8 Years",
+    experience: "5-8 years",
+    skills: ["React", "TypeScript", "Node.js"],
+    deadline: "15 Dec 2026",
+    status: "Published",
     summary:
       "Lead frontend architecture and scalable microservices for a high-traffic fintech platform.",
     description:
@@ -206,75 +214,17 @@ export const openPositions: readonly PublicJob[] = [
     postedDate: "2026-11-20",
   },
   {
-    id: "ADP-JD-1002",
-    title: "Cloud DevOps & Infrastructure Specialist",
-    department: "Infrastructure & Cloud",
-    location: "Pune, India",
-    employmentType: "Full-time",
-    workMode: "Remote",
-    experienceRange: "4 - 7 Years",
-    summary:
-      "Design, automate, and monitor resilient cloud infrastructures across AWS and Kubernetes.",
-    description:
-      "Our client is a global SaaS company expanding their cloud platform engineering group. In this role, you will champion infrastructure-as-code, streamline CI/CD delivery pipelines, and ensure 99.99% system availability.",
-    responsibilities: [
-      "Build and maintain Infrastructure-as-Code using Terraform and CloudFormation.",
-      "Manage Kubernetes clusters in production across multi-region environments.",
-      "Automate deployment pipelines using GitHub Actions and ArgoCD.",
-      "Implement comprehensive observability stacks with Prometheus, Grafana, and Datadog.",
-      "Enforce cloud security standards, IAM best practices, and cost governance.",
-    ],
-    requirements: [
-      "4+ years of dedicated DevOps/SRE experience in AWS cloud environments.",
-      "Proficiency with Kubernetes, Docker, Helm, and container orchestration.",
-      "Hands-on expertise with Terraform and automated CI/CD tooling.",
-      "Strong scripting abilities in Bash and Python.",
-      "Familiarity with SOC2 compliance and cloud security standards.",
-    ],
-    skills: ["AWS", "Kubernetes", "Terraform", "Docker", "CI/CD", "Linux", "Python"],
-    isPublished: true,
-    isActive: true,
-    postedDate: "2026-11-22",
-  },
-  {
-    id: "ADP-JD-1003",
-    title: "Data Engineer & Analytics Architect",
-    department: "Data & AI",
-    location: "Hyderabad, India",
-    employmentType: "Full-time",
-    workMode: "Hybrid",
-    experienceRange: "4 - 8 Years",
-    summary:
-      "Build high-throughput data ingestion pipelines and modern data warehouse solutions.",
-    description:
-      "Join an enterprise analytics team responsible for processing billions of transactions weekly. You will design, build, and optimize real-time streaming and batch ETL pipelines to power mission-critical dashboards and machine learning models.",
-    responsibilities: [
-      "Design real-time and batch data pipelines using Apache Spark, Kafka, and dbt.",
-      "Model and maintain petabyte-scale data lakes and warehouses in Snowflake and BigQuery.",
-      "Collaborate with data science and business intelligence teams to ensure data accuracy.",
-      "Optimize query performance, cost efficiency, and data governance frameworks.",
-      "Implement automated data quality testing and alerting mechanisms.",
-    ],
-    requirements: [
-      "4+ years of data engineering experience with SQL, Python, or Scala.",
-      "Proven track record with distributed processing (Spark) and modern cloud data warehouses.",
-      "Experience orchestrating complex workflows with Airflow or Prefect.",
-      "Understanding of dimensional modeling and data vault architectures.",
-      "Relevant cloud data certifications are an added advantage.",
-    ],
-    skills: ["Python", "SQL", "Apache Spark", "Kafka", "Snowflake", "Airflow", "dbt"],
-    isPublished: true,
-    isActive: true,
-    postedDate: "2026-11-23",
-  },
-  {
-    id: "ADP-JD-1004",
-    title: "BPO Operations Manager (International Process)",
-    department: "BPO & Operations",
+    id: "talent-acquisition-specialist",
+    jobId: "ADP-JD-1002",
+    title: "Talent Acquisition Specialist",
+    department: "People & Culture",
     location: "Mumbai, India",
     employmentType: "Full-time",
     workMode: "On-site",
-    experienceRange: "6 - 10 Years",
+    experience: "3-6 years",
+    skills: ["Recruitment", "Sourcing", "HR"],
+    deadline: "12 Dec 2026",
+    status: "Published",
     summary:
       "Lead international voice and non-voice operations delivering premium client SLAs.",
     description:
@@ -299,44 +249,17 @@ export const openPositions: readonly PublicJob[] = [
     postedDate: "2026-11-24",
   },
   {
-    id: "ADP-JD-1005",
-    title: "Technical Support Team Lead (Voice & Non-Voice)",
-    department: "BPO & Customer Experience",
-    location: "Noida, India",
+    id: "business-development-manager",
+    jobId: "ADP-JD-1003",
+    title: "Business Development Manager",
+    department: "Sales",
+    location: "Pune, India",
     employmentType: "Full-time",
-    workMode: "On-site",
-    experienceRange: "3 - 6 Years",
-    summary:
-      "Guide L1/L2 technical support associates delivering 24/7 global customer assistance.",
-    description:
-      "Lead a specialized technical support team providing Tier-1 and Tier-2 software support, ticket resolution, and customer satisfaction for global enterprise software users.",
-    responsibilities: [
-      "Supervise a team of 25+ technical support specialists across rotational shifts.",
-      "Monitor ticket queues, escalations, and resolution turnarounds against tight SLAs.",
-      "Conduct regular call listening, ticket audits, and individualized coaching sessions.",
-      "Collaborate with client engineering teams to report recurring bugs and system issues.",
-      "Maintain knowledge base articles and onboarding documentation.",
-    ],
-    requirements: [
-      "3+ years of experience in IT/BPO technical customer support with 1+ year in a leadership role.",
-      "Strong familiarity with ticketing software (Zendesk, Freshdesk, ServiceNow).",
-      "Demonstrated ability to troubleshoot basic networking, web application, and operating system issues.",
-      "Outstanding customer-facing demeanor and de-escalation skills.",
-      "Comfort working in rotational shifts including night hours.",
-    ],
-    skills: ["Technical Support", "Helpdesk", "Zendesk", "Troubleshooting", "Team Coaching", "SLA Management"],
-    isPublished: true,
-    isActive: true,
-    postedDate: "2026-11-25",
-  },
-  {
-    id: "ADP-JD-1006",
-    title: "AI / Machine Learning Engineer (Python & LLMs)",
-    department: "Emerging Tech",
-    location: "Bengaluru, India",
-    employmentType: "Full-time",
-    workMode: "Remote",
-    experienceRange: "3 - 6 Years",
+    workMode: "Hybrid",
+    experience: "6-10 years",
+    skills: ["Sales", "Partnerships", "SaaS"],
+    deadline: "20 Dec 2026",
+    status: "Published",
     summary:
       "Implement generative AI pipelines, embedding search, and fine-tuned LLM agents.",
     description:

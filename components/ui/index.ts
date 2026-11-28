@@ -1,3 +1,4 @@
+export { AtsScoreGauge } from "@/components/ui/ats-score-gauge";
 export { DashboardCard } from "@/components/ui/dashboard-card";
 export { DataTable } from "@/components/ui/data-table";
 export type { DataTableColumn } from "@/components/ui/data-table";
@@ -13,5 +14,7 @@ export { SearchInput } from "@/components/ui/search-input";
 export type { SearchInputProps } from "@/components/ui/search-input";
 export { Sidebar } from "@/components/ui/sidebar";
 export { StatusBadge } from "@/components/ui/status-badge";
+export { ToastProvider, useToast } from "@/components/ui/toast";
+export type { ToastTone } from "@/components/ui/toast";
 export { TopNavbar } from "@/components/ui/top-navbar";
 export type { NavigationLink } from "@/components/ui/navigation-link";
