@@ -11,7 +11,14 @@ type CareerOpenRolesProps = {
 };
 
 const selectClasses =
-  "mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+  "mt-2 w-full rounded-xl border border-[#DCE8ED] bg-white px-3 py-2 text-xs sm:text-sm text-[#152B38] outline-none transition focus:border-[oklch(39.8%_0.07_227.392)] focus:ring-2 focus:ring-[#DCEFF5]";
+
+const EMPLOYMENT_TYPE_OPTIONS = [
+  "Full-time",
+  "Part-time",
+  "Remote",
+  "Hybrid",
+] as const;
 
 export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
   const [query, setQuery] = useState("");
@@ -52,6 +59,13 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
           value.toLowerCase().includes(searchTerm),
         );
 
+      const matchesEmploymentType =
+        !employmentType ||
+        (employmentType === "Remote" || employmentType === "Hybrid"
+          ? job.workMode.toLowerCase() === employmentType.toLowerCase() ||
+            job.employmentType.toLowerCase() === employmentType.toLowerCase()
+          : job.employmentType.toLowerCase() === employmentType.toLowerCase());
+
       return (
         matchesSearch &&
         (!location || job.location === location) &&
@@ -81,21 +95,22 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
   }
 
   return (
-    <div className="mt-8 grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="mt-8 grid gap-8 lg:grid-cols-[17rem_minmax(0,1fr)]">
+      {/* Filter Sidebar */}
       <aside
         aria-labelledby="career-filter-heading"
-        className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        className="h-fit rounded-3xl border border-[#DCE8ED] bg-white p-5 sm:p-6 shadow-sm"
       >
         <div className="flex items-center justify-between gap-3">
           <h3
-            className="text-base font-semibold text-slate-950"
+            className="text-sm font-bold uppercase tracking-wider text-[#152B38]"
             id="career-filter-heading"
           >
-            Refine your search
+            Refine Search
           </h3>
           {hasActiveFilters && (
             <button
-              className="text-xs font-semibold text-blue-700 hover:text-blue-900"
+              className="text-xs font-semibold text-[oklch(39.8%_0.07_227.392)] hover:underline"
               onClick={clearFilters}
               type="button"
             >
@@ -104,15 +119,16 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
           )}
         </div>
 
-        <div className="mt-5 space-y-5">
+        <div className="mt-5 space-y-4">
           <SearchBar
-            label="Search roles"
+            label="Search roles or skills"
             onChange={setQuery}
-            placeholder="Title, skill, or keyword"
+            placeholder="e.g. React, DevOps, BPO"
             value={query}
           />
+
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-xs font-bold uppercase tracking-wider text-[#152B38]"
             htmlFor="career-location-filter"
           >
             Location
@@ -122,7 +138,7 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
               onChange={(event) => setLocation(event.currentTarget.value)}
               value={location}
             >
-              <option value="">All locations</option>
+              <option value="">All Locations</option>
               {locations.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -130,8 +146,9 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
               ))}
             </select>
           </label>
+
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-xs font-bold uppercase tracking-wider text-[#152B38]"
             htmlFor="career-department-filter"
           >
             Department
@@ -141,7 +158,7 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
               onChange={(event) => setDepartment(event.currentTarget.value)}
               value={department}
             >
-              <option value="">All departments</option>
+              <option value="">All Departments</option>
               {departments.map((item) => (
                 <option key={item} value={item}>
                   {item}
@@ -149,19 +166,20 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
               ))}
             </select>
           </label>
+
           <label
-            className="block text-sm font-medium text-slate-700"
+            className="block text-xs font-bold uppercase tracking-wider text-[#152B38]"
             htmlFor="career-employment-filter"
           >
-            Employment type
+            Employment Type
             <select
               className={selectClasses}
               id="career-employment-filter"
               onChange={(event) => setEmploymentType(event.currentTarget.value)}
               value={employmentType}
             >
-              <option value="">All types</option>
-              {employmentTypes.map((item) => (
+              <option value="">All Types</option>
+              {EMPLOYMENT_TYPE_OPTIONS.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
@@ -185,17 +203,18 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
         </div>
       </aside>
 
+      {/* Roles List */}
       <div>
         <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-          <h3 className="text-lg font-semibold text-slate-950">
-            Open opportunities
+          <h3 className="text-lg font-bold text-[#152B38]">
+            Published Openings
           </h3>
           <p
             aria-live="polite"
-            className="text-sm text-slate-500"
+            className="text-xs text-[#607D8B]"
             role="status"
           >
-            Showing {filteredJobs.length} of {jobs.length} sample roles
+            Showing {filteredJobs.length} of {jobs.length} approved roles
           </p>
         </div>
 
@@ -203,39 +222,64 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
           <div className="mt-4 space-y-4">
             {filteredJobs.map((job) => (
               <article
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md sm:p-6"
+                className="rounded-3xl border border-[#DCE8ED] bg-white p-5 sm:p-6 shadow-sm transition hover:border-[oklch(39.8%_0.07_227.392)]/40 hover:shadow-md"
                 key={job.id}
               >
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-[oklch(39.8%_0.07_227.392)] px-2.5 py-0.5 text-[11px] font-bold text-white">
+                        {job.id}
+                      </span>
+                      <span className="rounded-full bg-[#DCEFF5] px-3 py-0.5 text-xs font-semibold text-[#07394B]">
                         {job.department}
                       </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                        {job.employmentType}
+                      <span className="rounded-full bg-[#F1F8FB] px-2.5 py-0.5 text-xs text-[#4F6A78] border border-[#DCE8ED]">
+                        {job.employmentType} • {job.workMode}
                       </span>
                     </div>
-                    <h4 className="mt-3 text-xl font-semibold text-slate-950">
+
+                    <h4 className="mt-3 text-xl font-bold text-[#152B38]">
                       {job.title}
                     </h4>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {job.location} <span aria-hidden="true">·</span>{" "}
-                      {job.workMode}
+
+                    <p className="mt-1 text-xs text-[#607D8B]">
+                      {job.location} • Experience: {job.experienceRange}
                     </p>
-                    <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#3E5866]">
                       {job.summary}
                     </p>
+
+                    {/* Skill Badges */}
+                    <div className="mt-3.5 flex flex-wrap gap-1.5">
+                      {job.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-md bg-[#F1F8FB] px-2 py-0.5 text-[11px] font-medium text-[#152B38] border border-[#DCE8ED]"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <Link
-                    className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
-                    href={`/careers/${job.id}`}
-                  >
-                    View details
-                    <span aria-hidden="true" className="ml-2">
-                      →
-                    </span>
-                  </Link>
+
+                  {/* Actions */}
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2.5 shrink-0 pt-2 sm:pt-0">
+                    <Link
+                      className="rounded-full bg-[oklch(39.8%_0.07_227.392)] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#07394B]"
+                      href={`/submit-resume?jobId=${job.id}`}
+                    >
+                      Apply Now
+                    </Link>
+
+                    <Link
+                      className="rounded-full border border-[#DCE8ED] bg-[#F1F8FB] px-4 py-2 text-xs font-semibold text-[#152B38] transition hover:bg-[#DCEFF5]"
+                      href={`/careers/${job.id}`}
+                    >
+                      View Details
+                    </Link>
+                  </div>
                 </div>
               </article>
             ))}
@@ -245,22 +289,18 @@ export function CareerOpenRoles({ jobs }: CareerOpenRolesProps) {
             <EmptyState
               action={
                 <button
-                  className="rounded-lg border border-blue-700 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                  className="rounded-full border border-[oklch(39.8%_0.07_227.392)] px-4 py-2 text-xs font-semibold text-[oklch(39.8%_0.07_227.392)] hover:bg-[#DCEFF5]"
                   onClick={clearFilters}
                   type="button"
                 >
                   Clear filters
                 </button>
               }
-              description="Try another keyword or remove one of the selected filters."
-              title="No matching roles"
+              description="Try another keyword or reset location and department filters."
+              title="No matching opportunities"
             />
           </div>
         )}
-        <p className="mt-5 text-xs leading-5 text-slate-500">
-          These sample listings are for demonstration and may not represent
-          current vacancies.
-        </p>
       </div>
     </div>
   );

@@ -1,0 +1,39 @@
+
+{
+  "name": "adp-softech-backend",
+  "version": "1.0.0",
+  "description": "ADP Softech Recruitment Management System Backend",
+  "main": "dist/server.js",
+"scripts": {
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+ "test": "tsx --test tests/api.test.ts",
+  "start": "node dist/server.js",
+  "typecheck": "tsc --noEmit",
+  "seed:admin": "tsx src/seeds/createSuperAdmin.ts"
+},
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0",
+    "multer": "^2.0.2",
+    "nodemailer": "^10.6.1",
+    "zod": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

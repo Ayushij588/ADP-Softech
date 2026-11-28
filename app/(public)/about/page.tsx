@@ -1,194 +1,164 @@
-import { SectionHeading } from "@/components/public/section-heading";
+import Link from "next/link";
 
 const companyValues = [
   {
     number: "01",
-    title: "Integrity",
+    title: "Integrity & Discretion",
     description:
-      "We communicate honestly, respect confidentiality, and do what we say we will do.",
+      "We operate with transparent communication, respect client and candidate confidentiality, and deliver on our commitments.",
   },
   {
     number: "02",
-    title: "Partnership",
+    title: "Engineering & Domain Depth",
     description:
-      "We work alongside clients and professionals to understand what success means to them.",
+      "We understand modern technology stacks, architecture paradigms, and operational workflows, ensuring high-fidelity candidate matching.",
   },
   {
     number: "03",
-    title: "Care",
+    title: "People-Centric Partnership",
     description:
-      "We treat every person’s time, aspirations, and contribution with consideration.",
+      "Recruitment is about people and careers. We evaluate context, culture, and long-term potential beyond basic keyword matching.",
   },
   {
     number: "04",
-    title: "Curiosity",
+    title: "Global Talent Reach",
     description:
-      "We keep learning about people, industries, and the changing world of work.",
-  },
-] as const;
-
-const differentiators = [
-  {
-    title: "Context before matching",
-    description:
-      "We take time to understand the role, the team, and the reasons behind a hire.",
-  },
-  {
-    title: "Focused, thoughtful search",
-    description:
-      "We look beyond keywords to connect relevant experience with real opportunity.",
-  },
-  {
-    title: "Clear communication",
-    description:
-      "We aim to keep every conversation respectful, timely, and transparent.",
+      "Connecting companies with talent hubs across India, North America, the UK, Europe, UAE, and APAC regions.",
   },
 ] as const;
 
 export default function AboutPage() {
   return (
-    <main>
-      <section
-        aria-labelledby="company-story-heading"
-        className="overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-blue-900 text-white"
-      >
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 sm:py-28 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-300">
-              About ADP Softech
-            </p>
-            <h1
-              className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl"
-              id="company-story-heading"
-            >
-              Good recruitment begins with understanding.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100">
-              Our story is about bringing people and organizations together
-              with care, clarity, and a shared view of what comes next.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-200">
-              Our story
-            </p>
-            <p className="mt-4 leading-7 text-white">
-              ADP Softech was shaped by a simple belief: the best hiring
-              decisions happen when people are seen as more than a job title or
-              a list of requirements.
-            </p>
-            <p className="mt-4 leading-7 text-blue-100">
-              We partner with businesses navigating growth and change, and
-              support professionals as they consider their next opportunity.
-              Every search starts by listening to the people involved.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section
-        aria-labelledby="mission-heading"
-        className="mx-auto grid max-w-7xl gap-8 px-6 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"
-      >
-        <SectionHeading
-          eyebrow="Our mission"
-          id="mission-heading"
-          title="Make meaningful connections at work."
-        />
-        <p className="max-w-3xl text-lg leading-8 text-slate-600">
-          Our mission is to help organizations find the talent they need and
-          help professionals discover work where they can contribute and grow.
-          We do this through responsive service, considered search, and respect
-          for every person in the process.
-        </p>
-      </section>
-
-      <section
-        aria-labelledby="vision-heading"
-        className="bg-blue-50"
-      >
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-          <SectionHeading
-            eyebrow="Our vision"
-            id="vision-heading"
-            title="A world of work with better-fit opportunities."
-          />
-          <p className="max-w-3xl text-lg leading-8 text-slate-600">
-            We envision a future where recruitment feels more human and
-            intentional—where businesses can build capable teams, and people
-            can make confident, informed career choices.
+    <main className="bg-[#F1F8FB] min-h-screen">
+      {/* Header Banner */}
+      <section className="bg-gradient-to-r from-[#07394B] to-[#102D42] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#14B8C4]">
+            About ADP Softech
+          </p>
+          <h1 className="mt-4 max-w-3xl text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight">
+            Connecting Global Businesses With the Right Technology Talent
+          </h1>
+          <p className="mt-5 max-w-2xl text-base sm:text-lg leading-relaxed text-[#DCEFF5]">
+            ADP Softech is an independent recruitment, IT staffing, and offshore talent solutions company. We specialize in software engineering, cloud, data, and BPO operations staffing.
           </p>
         </div>
       </section>
 
-      <section
-        aria-labelledby="values-heading"
-        className="mx-auto max-w-7xl px-6 py-20 sm:py-24"
-      >
-        <SectionHeading
-          eyebrow="Our values"
-          id="values-heading"
-          title="Principles that shape how we work."
-          description="Our values guide the way we build relationships, approach each search, and support the people we work with."
-        />
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {companyValues.map((value) => (
-            <article
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-              key={value.number}
-            >
-              <span className="inline-flex size-10 items-center justify-center rounded-full bg-blue-50 text-sm font-semibold text-blue-800">
-                {value.number}
-              </span>
-              <h3 className="mt-5 text-lg font-semibold text-slate-950">
-                {value.title}
-              </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                {value.description}
+      {/* Company Story & Identity */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <div className="grid gap-12 lg:grid-cols-2 items-center">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-[oklch(39.8%_0.07_227.392)]">
+              Our Identity
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#152B38] sm:text-4xl">
+              An Independent Force in Technology Recruitment
+            </h2>
+            <div className="mt-6 space-y-4 text-sm sm:text-base leading-relaxed text-[#2E4857]">
+              <p>
+                ADP Softech was established to bridge the gap between ambitious technology organizations and high-caliber professionals. As an independent recruitment consultancy, we operate with singular focus on technology and operational staffing.
               </p>
-            </article>
-          ))}
+              <p>
+                Whether sourcing specialized full-stack engineers for domestic enterprise roadmaps or orchestrating cross-border offshore staffing for international clients in the US, UK, Canada, Australia, and the Middle East, our human-led screening guarantees precision and velocity.
+              </p>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/services"
+                className="rounded-full bg-[oklch(39.8%_0.07_227.392)] px-6 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs hover:bg-[#07394B] transition"
+              >
+                Our Staffing Services →
+              </Link>
+              <Link
+                href="/careers"
+                className="rounded-full border border-[#DCE8ED] bg-white px-6 py-2.5 text-xs sm:text-sm font-semibold text-[#152B38] hover:bg-[#DCEFF5] transition"
+              >
+                Browse Job Openings
+              </Link>
+            </div>
+          </div>
+
+          {/* Mission & Vision Card with Static 3D Depth */}
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-[#DCE8ED] bg-white p-7 sm:p-8 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#14B8C4]">
+                Our Mission
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-[#152B38]">
+                Empower Teams to Build the Future
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#4F6A78]">
+                To help businesses assemble high-performing engineering squads with minimal friction, and empower professionals to find meaningful career opportunities in an evolving digital world.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-[#DCE8ED] bg-white p-7 sm:p-8 shadow-sm">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#14B8C4]">
+                Our Vision
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-[#152B38]">
+                The Premier Talent Partner for Scalable Growth
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#4F6A78]">
+                To be recognized globally as the most trusted, agile, and transparent recruitment platform for technical and operational workforce expansion.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section
-        aria-labelledby="why-adp-heading"
-        className="bg-slate-950 text-white"
-      >
-        <div className="mx-auto grid max-w-7xl gap-12 px-6 py-20 sm:py-24 lg:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300">
-              Why ADP Softech
-            </p>
-            <h2
-              className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl"
-              id="why-adp-heading"
-            >
-              A recruitment partner who sees the whole picture.
+      {/* Core Values */}
+      <section className="bg-white border-y border-[#DCE8ED] py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-[oklch(39.8%_0.07_227.392)]">
+              Core Principles
+            </span>
+            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#152B38]">
+              Values That Guide Every Placement
             </h2>
-            <p className="mt-5 leading-7 text-slate-300">
-              We bring care to the details and keep the wider goals in view—from
-              the first conversation through to the next step.
-            </p>
           </div>
-          <div className="divide-y divide-white/15">
-            {differentiators.map((item, index) => (
-              <article
-                className="grid gap-3 py-5 first:pt-0 sm:grid-cols-[3rem_1fr]"
-                key={item.title}
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {companyValues.map((val) => (
+              <div
+                key={val.number}
+                className="rounded-2xl border border-[#DCE8ED] bg-[#F1F8FB] p-6 shadow-xs"
               >
-                <span className="text-sm font-semibold text-blue-300">
-                  0{index + 1}
+                <span className="text-xs font-bold text-[oklch(39.8%_0.07_227.392)]">
+                  {val.number}
                 </span>
-                <div>
-                  <h3 className="text-lg font-semibold">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    {item.description}
-                  </p>
-                </div>
-              </article>
+                <h3 className="mt-3 text-base font-bold text-[#152B38]">
+                  {val.title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-[#4F6A78]">
+                  {val.description}
+                </p>
+              </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Target Markets */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-20 text-center">
+        <span className="text-xs font-bold uppercase tracking-wider text-[oklch(39.8%_0.07_227.392)]">
+          Global Coverage
+        </span>
+        <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold text-[#152B38]">
+          Serving Clients &amp; Candidates Across Global Markets
+        </h2>
+        <div className="mt-8 flex flex-wrap justify-center gap-3 max-w-3xl mx-auto">
+          {["United States", "United Kingdom", "Canada", "Australia", "European Union", "United Arab Emirates", "India", "Global Remote"].map((region) => (
+            <span
+              key={region}
+              className="rounded-full border border-[#DCE8ED] bg-white px-4 py-1.5 text-xs font-semibold text-[#07394B] shadow-xs"
+            >
+              🌐 {region}
+            </span>
+          ))}
         </div>
       </section>
     </main>

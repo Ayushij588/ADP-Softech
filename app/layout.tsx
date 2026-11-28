@@ -19,13 +19,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "ADP Softech | Recruitment Services",
+    default: "ADP Softech | IT Recruitment & Offshore Staffing",
     template: "%s | ADP Softech",
   },
-  description: "ADP Softech public website and recruitment administration.",
+  description:
+    "End-to-end IT recruitment and offshore staffing solutions that help you hire skilled talent, build high-performing teams, and scale faster.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
